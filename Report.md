@@ -1,10 +1,10 @@
 # CSCE 435 Group project
 
 ## 1. Group members:
-1. First
-2. Second
-3. Third
-4. Fourth
+1. Arya Gupta
+2. Zia Uddin
+3. Rijul Ranjan
+4. JP Pham
 
 ---
 
