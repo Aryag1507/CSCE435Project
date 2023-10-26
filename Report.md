@@ -8,6 +8,8 @@
 
 ---
 
+We plan to use discord to communicate details regarding the project.
+
 ## 2. _due 10/25_ Project topic
 Our project topic is going to be sorting algorithms. We'll work on implementing several common sorting algorithms using MPI and Cuda.
 
