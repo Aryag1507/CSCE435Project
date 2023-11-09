@@ -10,14 +10,24 @@
 
 We plan to use discord to communicate details regarding the project.
 
-## 2. _due 10/25_ Project topic
-Our project topic is going to be sorting algorithms. We'll work on implementing several common sorting algorithms using MPI and Cuda.
+## 2. Project topic
+MPI and CUDA-based parallelized implementation of sorting algorithms and performance analysis based on problem size and number of processors / threads.
 
-## 2. _due 10/25_ Brief project description (what algorithms will you be comparing and on what architectures)
+## 2a. Brief project description (what algorithms will you be comparing and on what architectures)
 
-We plan to do two sorting algorithms: Merge Sort and Radix Sort. We plan to use MPI for merge sort and CUDA for radix sort.
+* Merge Sort (Cuda)
+* Merge Sort (MPI)
+* Radix Sort (Cuda)
+* Radix Sort (MPI)
+* Odd-Even Sort (Cuda)
+* Odd-Even Sort (MPI)
+* Bucket Sort (Cuda)
+* Bucket Sort (MPI)
 
-Merge Sort (https://pseudoeditor.com/guides/merge-sort): 
+## 2b. Pseudocode for each parallel algorithm
+
+Merge Sort:
+Pseudocode Source: https://pseudoeditor.com/guides/merge-sort
 
 The only parameter for this merge sort algorithm is the array that we're trying to sort.
 
@@ -51,13 +61,12 @@ If len(array) > 1 Then
    EndWhile
 EndIf
 ```
+MPI Code Source: Used AI Assistance to implement
+Cuda Code Source: Used AI Assistance to implement
 
-We plan to use the algorithm in the link below to parallelize the merge sort: 
-https://cse.buffalo.edu/faculty/miller/Courses/CSE702/Swati.Nair-Fall-2018.pdf
 
-Radix Sort (https://www.codingeek.com/algorithms/radix-sort-explanation-pseudocode-and-implementation/):
-
-Takes in two parameters A, d. A is the array to sort and each value in A is a d-digit integer.
+Radix Sort: 
+Pseudocode Source: https://www.codingeek.com/algorithms/radix-sort-explanation-pseudocode-and-implementation/
 
 ```
 //It works same as counting sort for d number of passes.
@@ -73,7 +82,7 @@ Takes in two parameters A, d. A is the array to sort and each value in A is a d-
          count[k] = count[k] + count[k-1]
         //Build the resulting array by checking
         //new position of A[i] from count[k]
-        for i = n-1 downto 0 do
+        for i = n-1 down to 0 do
          result[ count[key of(A[i])] ] = A[j]
          count[key of(A[i])]--
         //Now main array A[] contains sorted numbers
@@ -83,10 +92,75 @@ Takes in two parameters A, d. A is the array to sort and each value in A is a d-
     end for(j)
 end func
 ```
+MPI Code Source: Used AI Assistance to implement + GitHub: https://github.com/mpseligson/radix
+Cuda Code Source: https://github.com/ufukomer/cuda-radix-sort/blob/master/radix-sort/kernel.cu
 
-These are a few links we plan to refer to when we create our parallel algorithm for radix sort:
-* https://github.com/ufukomer/cuda-radix-sort/blob/master/radix-sort/kernel.cu
-* https://github.com/mark-poscablo/gpu-radix-sort
+Odd Even Sort:
+Pseudocode Source: https://sortvisualizer.com/oddevensort/ 
+```
+void oddEvenSort(int* arr, int n) {
+    bool sorted = false;
+    while (!sorted) {
+        sorted = true;
+        for (int i = 1; i < n-1; i+=2) {
+            if (arr[i] > arr[i+1]) {
+                int temp = arr[i];
+                arr[i] = arr[i+1];
+                arr[i+1] = temp;
+                sorted = false;
+            }
+        }
 
-What we plan to do to show the changes with the parallel algorithm:
-* We plan to compare several different variable between the parallel algorithms for both merge and radix sort with there sequential counterparts. We plan to calculate the speedup for both algorithms and compare. We also plan to figure out a way to analyze our performance of computation and communication for our algorithms.
+        for (int i = 0; i < n-1; i+=2) {
+            if (arr[i] > arr[i+1]) {
+                int temp = arr[i];
+                arr[i] = arr[i+1];
+                arr[i+1] = temp;
+                sorted = false;
+            }
+        }
+    }
+}
+```
+MPI Code: https://github.com/ashantanu/Odd-Even-Sort-using-MPI/blob/master/oddEven.cpp
+Cuda Code Source: https://github.com/Kshitij421/Odd-Even-Sort-using-Cuda-/blob/master/oddeven.cu
+
+Bucket Sort:
+Pseudocode Source: https://www.cs.umd.edu/class/spring2021/cmsc351-0201/files/bucketSort.pdf
+```
+BucketSort(A):
+n = A.length
+Let B[0, . . . , n − 1] be a new array
+for i = 0 to n - 1
+B[i] ← 0
+for i = 1 to n
+B[bnA[i]c] ← A[i]
+for i = 0 to n-1
+sort list B[i] using insertion sort
+concatenate the lists B[0], B[1], . . . , B[n − 1]
+return B
+```
+MPI Code Source: Used AI Assistance to implement
+Cuda Code Source: Used AI Assistance to implement
+
+## 2c. Evaluation Plan
+
+Input sizes, Input types
+* We plan to have varying input sizes for the unsorted arrays. We will use doubles (and integers for radix sort) for input types.
+* Also plan to use varying number of processors vs the input size
+* Array input sizes will be: {2^4, 2^8, 2^16, 2^20, 2^24}
+Strong scaling (same problem size, increase number of processors/nodes)
+* Will use strong scaling on all the algorithms. We want to see the relationship between time and the increase in processors. We’ll continually increase the number of processors and see the effect it has on the time and record it. Doing this, we’ll be able to see certain trends and make some data driven decisions based on what we see.
+* (MPI) Increase number of cores while problem size is constant: {2, 4, 8, 16, 32}
+* (CUDA) Increase number of threads while problem size is constant: {64, 128, 512, 1024}
+Weak scaling (increase problem size, increase number of processors)
+* Will use weak scaling on all algorithms. We want to see the relationship between time as both the problem size and number of processors. Here, we will increase both and measure the effect it has on the time.
+* (MPI) Increase number of cores: {2,4,8,16,32}
+* (CUDA) Increase number of threads: {64, 128, 512,1024}
+* Increase problem sizes for both implementations: {2^4, 2^8, 2^16, 2^20, 2^24}
+Number of threads in a block on the GPU
+* Mainly applicable to CUDA 
+* Increase the number of blocks: {1,8,16,64,128,1024}
+
+## Note
+Due to Grace being down for several days, we were unable to generate the .cali files for all the algorithm implementations. Our team plans to generate these files once Grace is back up again. Additionally, we had some issues with parallelizing bucket sort for CUDA and MPI implementations. We plan to figure out the correct implementation for bucket sort. 
