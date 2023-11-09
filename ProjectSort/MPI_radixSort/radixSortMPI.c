@@ -1,6 +1,6 @@
 
 
-// source: 
+// source: ChatGPT
 
 
 #include <mpi.h>

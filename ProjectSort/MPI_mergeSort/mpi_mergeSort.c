@@ -1,5 +1,5 @@
 
-// source:
+// source: chatGPT
 
 #include <stdio.h>
 #include <stdlib.h>

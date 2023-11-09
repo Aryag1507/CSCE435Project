@@ -1,5 +1,5 @@
 
-// source: 
+// source: ChatGPT
 
 #include <iostream>
 #include <cuda.h>

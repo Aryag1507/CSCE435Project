@@ -1,5 +1,5 @@
 
-//source: AI
+//source: https://github.com/ufukomer/cuda-radix-sort/blob/master/radix-sort/kernel.cu
 
 #include <stdio.h>
 #include <stdlib.h>

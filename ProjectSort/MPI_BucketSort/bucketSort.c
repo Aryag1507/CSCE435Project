@@ -1,5 +1,5 @@
 
-// source: AI
+// source: ChatGPT
 
 #include <stdio.h>
 #include <stdlib.h>
