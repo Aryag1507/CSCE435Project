@@ -149,15 +149,18 @@ Input sizes, Input types
 * We plan to have varying input sizes for the unsorted arrays. We will use doubles (and integers for radix sort) for input types.
 * Also plan to use varying number of processors vs the input size
 * Array input sizes will be: {2^4, 2^8, 2^16, 2^20, 2^24}
+  
 Strong scaling (same problem size, increase number of processors/nodes)
 * Will use strong scaling on all the algorithms. We want to see the relationship between time and the increase in processors. We’ll continually increase the number of processors and see the effect it has on the time and record it. Doing this, we’ll be able to see certain trends and make some data driven decisions based on what we see.
 * (MPI) Increase number of cores while problem size is constant: {2, 4, 8, 16, 32}
 * (CUDA) Increase number of threads while problem size is constant: {64, 128, 512, 1024}
+  
 Weak scaling (increase problem size, increase number of processors)
 * Will use weak scaling on all algorithms. We want to see the relationship between time as both the problem size and number of processors. Here, we will increase both and measure the effect it has on the time.
 * (MPI) Increase number of cores: {2,4,8,16,32}
 * (CUDA) Increase number of threads: {64, 128, 512,1024}
 * Increase problem sizes for both implementations: {2^4, 2^8, 2^16, 2^20, 2^24}
+  
 Number of threads in a block on the GPU
 * Mainly applicable to CUDA 
 * Increase the number of blocks: {1,8,16,64,128,1024}
