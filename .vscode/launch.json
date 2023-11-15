@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "c:/Users/JP/Documents/CSCE435Project/ProjectSort/MPI_mergeSort",
-      "program": "c:/Users/JP/Documents/CSCE435Project/ProjectSort/MPI_mergeSort/build/Debug/outDebug",
+      "cwd": "c:/Users/JP/Documents/CSCE435Project/ProjectSort/MPI_BucketSort",
+      "program": "c:/Users/JP/Documents/CSCE435Project/ProjectSort/MPI_BucketSort/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
