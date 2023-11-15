@@ -18,7 +18,7 @@ const char* comm = "comm";
 const char* MPIBarrier = "MPI_Barrier";
 const char* comm_small = "comp_small";
 const char* comm_large = "comm_large";
-const char* MPIBcast = "MPI_Bcast";
+const char* MPIRecv = "MPI_Recv";
 const char* MPISend = "MPI_Send";
 const char* cudaMemcpy = "cudaMemcpy";
 
@@ -138,11 +138,15 @@ int main(int argc, char **argv) {
     CALI_MARK_BEGIN(comm_large);
     if (rank == 0) {
         for (int i = 1; i < size; i++) {
+            CALI_MARK_BEGIN(MPISend);
             MPI_Send(arr + i * chunk_size, chunk_size, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
+            CALI_MARK_END(MPISend);
         }
         memcpy(local_array, arr, chunk_size * sizeof(double));
     } else {
+        CALI_MARK_BEGIN(MPIRecv);
         MPI_Recv(local_array, chunk_size, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        CALI_MARK_END(MPIRecv);
     }
     CALI_MARK_END(comm_large);
     CALI_MARK_END(comm);
@@ -160,14 +164,18 @@ int main(int argc, char **argv) {
     CALI_MARK_BEGIN(comm_large);
     if (rank == 0) {
         double* recv_buffer = (double *)malloc(sizeof(double) * chunk_size);
+        CALI_MARK_BEGIN(MPIRecv);
         for (int i = 1; i < size; i++) {
             MPI_Recv(recv_buffer, chunk_size, MPI_DOUBLE, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             memcpy(arr + i * chunk_size, recv_buffer, chunk_size * sizeof(double));
         }
+        CALI_MARK_END(MPIRecv);
         memcpy(arr, local_array, chunk_size * sizeof(double));
         free(recv_buffer);
     } else {
+        CALI_MARK_BEGIN(MPISend);
         MPI_Send(local_array, chunk_size, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+        CALI_MARK_END(MPISend);
     }
     CALI_MARK_END(comm_large);
     CALI_MARK_END(comm);
@@ -182,10 +190,10 @@ int main(int argc, char **argv) {
         CALI_MARK_END(comp);
         final_sort_end = MPI_Wtime();
 
-        for (int i = 0; i < array_size; i++) {
-            printf("%.2f ", arr[i]);
-        }
-        printf("\n");
+        // for (int i = 0; i < array_size; i++) {
+        //     printf("%.2f ", arr[i]);
+        // }
+        // printf("\n");
     }
 
     whole_compute_end = MPI_Wtime();
@@ -209,10 +217,11 @@ int main(int argc, char **argv) {
     if (rank == 0) {
         printf("Initialization Time: %f seconds\n", init_end - init_start);
         printf("Final Merge Sort Time: %f seconds\n", final_sort_end - final_sort_start);
+        printf("whole computation Time: %f seconds\n", whole_compute_end - whole_compute_start);
     }
-    printf("Local Sort Time (Rank %d): %f seconds\n", rank, local_sort_end - local_sort_start);
-    printf("Gather Time (Rank %d): %f seconds\n", rank, gather_end - gather_start);
-    printf("whole computation Time: %f seconds\n", whole_compute_end - whole_compute_start);
+    // printf("Local Sort Time (Rank %d): %f seconds\n", rank, local_sort_end - local_sort_start);
+    // printf("Gather Time (Rank %d): %f seconds\n", rank, gather_end - gather_start);
+    // printf("whole computation Time: %f seconds\n", whole_compute_end - whole_compute_start);
 
     free(local_array);
     if (rank == 0) {
