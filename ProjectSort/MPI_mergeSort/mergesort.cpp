@@ -166,9 +166,9 @@ int main(int argc, char **argv) {
         final_sort_end = MPI_Wtime();
 
         for (int i = 0; i < array_size; i++) {
-            printf("%.2f ", arr[i]);
+            // printf("%.2f ", arr[i]);
         }
-        printf("\n");
+        // printf("\n");
     }
 
     whole_compute_end = MPI_Wtime();
@@ -186,16 +186,16 @@ int main(int argc, char **argv) {
     adiak::value("InputSize", array_size); // The number of elements in input dataset (1000)
     adiak::value("InputType", "Random"); // For sorting, this would be "Sorted", "ReverseSorted", "Random", "1%perturbed"
     adiak::value("num_procs", size); // The number of processors (MPI ranks)
-    adiak::value("group_num", -1); // The number of your group (integer, e.g., 1, 10)
+    adiak::value("group_num", 2); // The number of your group (integer, e.g., 1, 10)
     adiak::value("implementation_source", "AI"); // Where you got the source code of your algorithm; choices: ("Online", "AI", "Handwritten").
 
     if (rank == 0) {
-        printf("Initialization Time: %f seconds\n", init_end - init_start);
-        printf("Final Merge Sort Time: %f seconds\n", final_sort_end - final_sort_start);
+        // printf("Initialization Time: %f seconds\n", init_end - init_start);
+        // printf("Final Merge Sort Time: %f seconds\n", final_sort_end - final_sort_start);
     }
-    printf("Local Sort Time (Rank %d): %f seconds\n", rank, local_sort_end - local_sort_start);
-    printf("Gather Time (Rank %d): %f seconds\n", rank, gather_end - gather_start);
-    printf("whole computation Time: %f seconds\n", whole_compute_end - whole_compute_start);
+    // printf("Local Sort Time (Rank %d): %f seconds\n", rank, local_sort_end - local_sort_start);
+    // printf("Gather Time (Rank %d): %f seconds\n", rank, gather_end - gather_start);
+    // printf("whole computation Time: %f seconds\n", whole_compute_end - whole_compute_start);
 
     free(local_array);
     if (rank == 0) {
