@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <cuda_runtime.h>
 
-
 #define CUDA_CHECK(call) \
     do { \
         cudaError_t cudaError = call; \
@@ -23,9 +22,8 @@ __device__ int getMax(int* arr, int numElements) {
     return max;
 }
 
-__device__ void countSort(int* arr, int numElements, int exp) {
+__device__ void countSort(int* arr, int* output, int numElements, int exp) {
     const int bucketSize = 10;
-    int* output = new int[numElements];
     int count[bucketSize] = {0};
 
     for (int i = 0; i < numElements; i++)
@@ -41,15 +39,13 @@ __device__ void countSort(int* arr, int numElements, int exp) {
 
     for (int i = 0; i < numElements; i++)
         arr[i] = output[i];
-
-    delete[] output;
 }
 
-__global__ void radixSort(int* d_data, int numElements) {
+__global__ void radixSort(int* d_data, int* d_output, int numElements) {
     int max = getMax(d_data, numElements);
 
     for (int exp = 1; max / exp > 0; exp *= 10)
-        countSort(d_data, numElements, exp);
+        countSort(d_data, d_output, numElements, exp);
 }
 
 int main(int argc, char** argv) {
@@ -65,7 +61,7 @@ int main(int argc, char** argv) {
 
     // Initialize the array with random values
     for (int i = 0; i < array_length; ++i) {
-        h_data[i] = rand() % 1000; // Assuming values are in the range [0, 999]
+        h_data[i] = rand();
     }
 
     // Display the original array
@@ -77,14 +73,16 @@ int main(int argc, char** argv) {
 
     // Allocate and copy the array to the device
     int* d_data;
+    int* d_output;
     CUDA_CHECK(cudaMalloc((void**)&d_data, array_length * sizeof(int)));
+    CUDA_CHECK(cudaMalloc((void**)&d_output, array_length * sizeof(int)));
     CUDA_CHECK(cudaMemcpy(d_data, h_data, array_length * sizeof(int), cudaMemcpyHostToDevice));
 
     // Launch the kernel
     int threadsPerBlock = num_threads;
     int blocksPerGrid = (array_length + threadsPerBlock - 1) / threadsPerBlock;
 
-    radixSort<<<blocksPerGrid, threadsPerBlock>>>(d_data, array_length);
+    radixSort<<<blocksPerGrid, threadsPerBlock>>>(d_data, d_output, array_length);
 
     // Wait for GPU to finish before accessing on host
     CUDA_CHECK(cudaDeviceSynchronize());
@@ -102,6 +100,7 @@ int main(int argc, char** argv) {
     // Cleanup
     free(h_data);
     CUDA_CHECK(cudaFree(d_data));
+    CUDA_CHECK(cudaFree(d_output));
 
     return 0;
 }
