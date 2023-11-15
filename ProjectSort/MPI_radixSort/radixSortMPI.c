@@ -93,10 +93,16 @@ int main(int argc, char *argv[]) {
     CALI_MARK_BEGIN(whole_computation);
 
     // Initialize MPI
+    init_start = MPI_Wtime();
+    CALI_MARK_BEGIN(initialization);
+
     int num_process, rank;
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &num_process);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    init_end = MPI_Wtime();
+    CALI_MARK_END(initialization);
 
     // Get array size from command line argument
     int n = atoi(argv[1]);
