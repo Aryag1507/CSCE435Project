@@ -12,6 +12,30 @@
 #include <caliper/cali-manager.h>
 #include <adiak.hpp>
 
+void Usage(char *program);
+void Print_list(int local_A[], int local_n, int rank);
+void Merge_low(int local_A[], int temp_B[], int temp_C[],
+			   int local_n);
+void Merge_high(int local_A[], int temp_B[], int temp_C[],
+				int local_n);
+void Generate_list(int local_A[], int local_n, int my_rank, ListType list_type);
+int Compare(const void *a_p, const void *b_p);
+
+/* Functions involving communication */
+void Get_args(int argc, char *argv[], int *global_n_p, int *local_n_p,
+			  ListType *list_type_p, int my_rank, int p, MPI_Comm comm);
+void Sort(int local_A[], int local_n, int my_rank,
+		  int p, MPI_Comm comm);
+void Odd_even_iter(int local_A[], int temp_B[], int temp_C[],
+				   int local_n, int phase, int even_partner, int odd_partner,
+				   int my_rank, int p, MPI_Comm comm);
+void Print_local_lists(int local_A[], int local_n,
+					   int my_rank, int p, MPI_Comm comm);
+void Print_global_list(int local_A[], int local_n, int my_rank,
+					   int p, MPI_Comm comm);
+void Check_sorted(int local_A[], int local_n, int my_rank,
+				  int p, MPI_Comm comm);
+
 const int RMAX = 100;
 typedef enum
 {
