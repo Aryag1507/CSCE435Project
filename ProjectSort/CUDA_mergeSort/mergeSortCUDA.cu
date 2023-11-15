@@ -5,6 +5,11 @@
 #include <cuda.h>
 #include <cstdlib>
 #include <ctime>
+#include <caliper/cali.h>
+
+const char* mem_alloc = "mem_alloc";
+const char* sorting = "sorting";
+const char* whole_computation = "whole_computation";
 
 __global__ void simpleMerge(int *d_array, int size, int width) {
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
@@ -50,6 +55,8 @@ void printArray(int *array, int size) {
 }
 
 int main() {
+
+
     int n;
     int threadsPerBlock;
 
@@ -58,6 +65,8 @@ int main() {
 
     std::cout << "Enter the number of threads per block: ";
     std::cin >> threadsPerBlock;
+
+    CALI_MARK_BEGIN(whole_computation);
 
     int *h_array = new int[n];
 
@@ -69,15 +78,19 @@ int main() {
     std::cout << "Unsorted array: \n";
     printArray(h_array, n);
 
+    CALI_MARK_BEGIN(mem_alloc);
     int *d_array;
     cudaMalloc(&d_array, n * sizeof(int));
     cudaMemcpy(d_array, h_array, n * sizeof(int), cudaMemcpyHostToDevice);
+    CALI_MARK_END(mem_alloc);
 
+    CALI_MARK_BEGIN(sorting);
     for (int width = 1; width < n; width *= 2) {
         int blocks = (n + threadsPerBlock - 1) / (threadsPerBlock * 2);
         simpleMerge<<<blocks, threadsPerBlock>>>(d_array, n, width);
         cudaDeviceSynchronize();
     }
+    CALI_MARK_END(sorting);
 
     cudaMemcpy(h_array, d_array, n * sizeof(int), cudaMemcpyDeviceToHost);
 
@@ -86,6 +99,9 @@ int main() {
 
     delete[] h_array;
     cudaFree(d_array);
+
+    CALI_MARK_BEGIN(whole_computation);
+
 
     return 0;
 }
