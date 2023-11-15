@@ -5,6 +5,7 @@
 #include <cuda.h>
 #include <cstdlib>
 #include <ctime>
+#include <caliper/cali.h>
 
 __global__ void simpleMerge(int *d_array, int size, int width) {
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
@@ -50,6 +51,9 @@ void printArray(int *array, int size) {
 }
 
 int main() {
+
+    cali_init();
+
     int n;
     int threadsPerBlock;
 
@@ -69,15 +73,19 @@ int main() {
     std::cout << "Unsorted array: \n";
     printArray(h_array, n);
 
+    CALI_MARK_BEGIN("Memory Allocation");
     int *d_array;
     cudaMalloc(&d_array, n * sizeof(int));
     cudaMemcpy(d_array, h_array, n * sizeof(int), cudaMemcpyHostToDevice);
+    CALI_MARK_END("Memory Allocation");
 
+    CALI_MARK_BEGIN("Sorting");
     for (int width = 1; width < n; width *= 2) {
         int blocks = (n + threadsPerBlock - 1) / (threadsPerBlock * 2);
         simpleMerge<<<blocks, threadsPerBlock>>>(d_array, n, width);
         cudaDeviceSynchronize();
     }
+    CALI_MARK_END("Sorting");
 
     cudaMemcpy(h_array, d_array, n * sizeof(int), cudaMemcpyDeviceToHost);
 
@@ -86,6 +94,8 @@ int main() {
 
     delete[] h_array;
     cudaFree(d_array);
+
+    cali_finalize();
 
     return 0;
 }
