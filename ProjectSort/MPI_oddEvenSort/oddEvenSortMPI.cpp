@@ -4,6 +4,16 @@
 #include <stdlib.h>
 #include <algorithm> 
 
+// define calipher region names
+const char *main_function = "main";
+const char *data_init = "data_init";
+const char *correctness_check = "correctness_check";
+const char *comm = "comm";
+const char *comm_large = "comm_large";
+const char *comm_small = "comm _small";
+const char *comp = "comp";
+const char *comp_large = "comp_large";
+const char *comp_small = "comp_small";
 
 // source: https://github.com/ashantanu/Odd-Even-Sort-using-MPI/blob/master/oddEven.cpp
 
@@ -36,11 +46,14 @@ int main(int argc, char *argv[]){
          int avgn = n / nump;
          localn=avgn;
 
-    	data=(int*)malloc(sizeof(int)*n);
+		 CALI_MARK_BEGIN(data_init);
+		 data = (int *)malloc(sizeof(int) * n);
          for(i = 0; i < n; i++) {
             data[i] = rand()%100;
          }
-         printf("array data is:");
+		 CALI_MARK_END(data_init);
+
+		 printf("array data is:");
          for(i=0;i<n;i++){
          	printf("%d ",data[i] );
          }
@@ -49,8 +62,13 @@ int main(int argc, char *argv[]){
     else{
     	data=NULL;
     }
-    ierr=MPI_Bcast(&localn,1,MPI_INT,0,MPI_COMM_WORLD);
-    ierr=MPI_Scatter(data, localn, MPI_INT, &recdata, 100, MPI_INT, 0, MPI_COMM_WORLD);
+	CALI_MARK_BEGIN(comm);
+	CALI_MARK_BEGIN(comm_large);
+	ierr=MPI_Bcast(&localn,1,MPI_INT,0,MPI_COMM_WORLD);
+	CALI_MARK_END(comm_large);
+	CALI_MARK_END(comm);
+
+	ierr=MPI_Scatter(data, localn, MPI_INT, &recdata, 100, MPI_INT, 0, MPI_COMM_WORLD);
     printf("%d:received data:",rank);
          for(i=0;i<localn;i++){
          	printf("%d ",recdata[i] );
@@ -59,7 +77,9 @@ int main(int argc, char *argv[]){
     sort(recdata,recdata+localn);
 
     //begin the odd-even sort
-    int oddrank,evenrank;
+	CALI_MARK_BEGIN(comp);
+	CALI_MARK_BEGIN(comp_large);
+	int oddrank,evenrank;
 
     if(rank%2==0){
     	oddrank=rank-1; 
@@ -114,6 +134,9 @@ for (p=0; p<nump-1; p++) {
 
 
 ierr=MPI_Gather(recdata,localn,MPI_INT,data,localn,MPI_INT,0,MPI_COMM_WORLD);
+CALI_MARK_END(comp_large);
+CALI_MARK_END(comp);
+
 if(rank==root_process){
 printf("final sorted data:");
          for(i=0;i<n;i++){
@@ -122,6 +145,21 @@ printf("final sorted data:");
     printf("\n");
 }
 
-ierr = MPI_Finalize();
-
+	adiak::init(NULL);
+	adiak::launchdate();										 // launch date of the job
+	adiak::libraries();											 // Libraries used
+	adiak::cmdline();											 // Command line used to launch the job
+	adiak::clustername();										 // Name of the cluster
+	adiak::value("Algorithm", "odd-even sort");						 // The name of the algorithm you are using (e.g., "MergeSort", "BitonicSort")
+	adiak::value("ProgrammingModel", "MPI");			 // e.g., "MPI", "CUDA", "MPIwithCUDA"
+	adiak::value("Datatype", "int");							 // The datatype of input elements (e.g., double, int, float)
+	adiak::value("SizeOfDatatype", sizeof(int));				 // sizeof(datatype) of input elements in bytes (e.g., 1, 2, 4)
+	adiak::value("InputSize", n);						 // The number of elements in input dataset (1000)
+	adiak::value("InputType", inputType);						 // For sorting, this would be "Sorted", "ReverseSorted", "Random", "1%perturbed"
+	adiak::value("num_procs", num_procs);						 // The number of processors (MPI ranks)
+	adiak::value("num_threads", num_threads);					 // The number of CUDA or OpenMP threads
+	adiak::value("num_blocks", num_blocks);						 // The number of CUDA blocks
+	adiak::value("group_num", group_number);					 // The number of your group (integer, e.g., 1, 10)
+	adiak::value("implementation_source", "AI ChatGPT") // Where you got the source code of your algorithm; choices: ("Online", "AI", "Handwritten").
+	ierr = MPI_Finalize();
 }
