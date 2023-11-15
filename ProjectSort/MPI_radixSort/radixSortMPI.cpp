@@ -1,9 +1,13 @@
-// source: ChatGPT
+/ source: ChatGPT
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#include <caliper/cali.h>
+#include <caliper/cali-manager.h>
+#include <adiak.hpp>
 
 const char* initialization = "initialization";
 const char* gathering = "gathering";
@@ -12,9 +16,7 @@ const char* local_sort_time = "local_sort_time";
 const char* whole_computation = "whole_computation";
 
 const char* comp_large = "comp_large";
-const char* comm_large = "comm_large";
-const char * compSmall = "comp_small";
-const char *main = "main";
+const char * comp_small = "comp_small";
 
 void rng(int* arr, int n) {
     int seed = 13516095;
@@ -85,9 +87,17 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Usage: mpirun -n <num_processors> ./radixSort <array_size>\n");
         return 1;
     }
+
+    int num_process, rank; 
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &num_process);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     
-    double init_start, init_end, local_sort_start, local_sort_end, gather_start, gather_end, final_sort_start, final_sort_end;
+    double init_start, init_end, local_sort_start, local_sort_end, gather_start, gather_end, complete_sort_start, complete_sort_end;
     double whole_compute_start, whole_compute_end;
+
+    cali::ConfigManager mgr;
+    mgr.start();
 
     whole_compute_start = MPI_Wtime();
     CALI_MARK_BEGIN(whole_computation);
@@ -95,11 +105,6 @@ int main(int argc, char *argv[]) {
     // Initialize MPI
     init_start = MPI_Wtime();
     CALI_MARK_BEGIN(initialization);
-
-    int num_process, rank;
-    MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &num_process);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     init_end = MPI_Wtime();
     CALI_MARK_END(initialization);
@@ -135,27 +140,31 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
 
     // Sort the array
-    double start = MPI_Wtime();
+    complete_sort_start = MPI_Wtime();
+    CALI_MARK_BEGIN(comp_large);
+
     radix_sort(arr, n, num_process, rank);
-    double end = MPI_Wtime();
+
+    complete_sort_end = MPI_Wtime();
+    CALI_MARK_END(comp_large);
 
     // Only rank 0 prints the sorted array and timing information
     if (rank == 0) {
         printf("[Sorted array]\n");
         print(arr, n);
-        printf("[Sorted in %f seconds]\n", end - start);
+        printf("[Sorted in %f seconds]\n", complete_sort_end - complete_sort_start);
     }
-
-    // Free memory and finalize MPI
-    free(arr);
-    MPI_Finalize();
 
     whole_compute_end = MPI_Wtime();
     CALI_MARK_END(whole_computation);
 
-    printf("Local Sort Time (Rank %d): %f seconds\n", rank, local_sort_end - local_sort_start);
-    printf("Gather Time (Rank %d): %f seconds\n", rank, gather_end - gather_start);
+    printf("Local Sort Time (Rank %d): %f seconds\n", rank, complete_sort_end - complete_sort_start);
     printf("whole computation Time: %f seconds\n", whole_compute_end - whole_compute_start);
+
+    free(arr);
+    mgr.stop();
+    mgr.flush();
+    MPI_Finalize();
 
     return 0;
 }
