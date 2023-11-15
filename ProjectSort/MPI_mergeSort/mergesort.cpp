@@ -12,12 +12,20 @@ const char* final_sort = "final_sort";
 const char* local_sort_time = "local_sort_time";
 const char* whole_computation = "whole_computation";
 
-const char * comp = "comp";
-const char* comp_large = "comp_large";
+const char* mainn = "main";
+const char* data_init = "data_init";
+const char* comm = "comm";
+const char* MPIBarrier = "MPI_Barrier";
+const char* comm_small = "comp_small";
 const char* comm_large = "comm_large";
-const char * compSmall = "comp_small";
-const char * commSmall = "comm_small";
-const char *main = "main";
+const char* MPIBcast = "MPI_Bcast";
+const char* MPISend = "MPI_Send";
+const char* cudaMemcpy = "cudaMemcpy";
+
+const char* comp = "comp";
+const char* comp_small = "comp_small";
+const char* comp_large = "comp_large";
+const char* correctness_check = "correctness_check";
 
 
 void merge(double arr[], int l, int m, int r) {
@@ -61,18 +69,19 @@ void merge(double arr[], int l, int m, int r) {
 }
 
 void mergeSort(double arr[], int l, int r) {
-    CALI_MARK_BEGIN(comp);
-    CALI_MARK_BEGIN(comp_large);
     if (l < r) {
         int m = l + (r - l) / 2;
 
         mergeSort(arr, l, m);
         mergeSort(arr, m + 1, r);
 
+
+        CALI_MARK_BEGIN(comp);
+        CALI_MARK_BEGIN(comp_small);
         merge(arr, l, m, r);
+        CALI_MARK_END(comp_small);
+        CALI_MARK_END(comp);
     }
-    CALI_MARK_END(comp_large);
-    CALI_MARK_BEGIN(comp);
 }
 
 
@@ -109,47 +118,51 @@ int main(int argc, char **argv) {
     double whole_compute_start, whole_compute_end;
 
     whole_compute_start = MPI_Wtime();
-    CALI_MARK_BEGIN(whole_computation);
+    CALI_MARK_BEGIN(mainn);
     
     cali::ConfigManager mgr;
     mgr.start();
 
-    CALI_MARK_BEGIN(initialization);
+    init_start = MPI_Wtime();
+    CALI_MARK_BEGIN(data_init);
     if (rank == 0) {
         arr = (double *)malloc(sizeof(double) * array_size);
-        init_start = MPI_Wtime();
         for (int i = 0; i < array_size; i++) {
             arr[i] = (double)rand() / RAND_MAX;
         }
-        init_end = MPI_Wtime();
     }
-    CALI_MARK_END(initialization);
+    init_end = MPI_Wtime();
+    CALI_MARK_END(data_init);
 
+    CALI_MARK_BEGIN(comm);
     CALI_MARK_BEGIN(comm_large);
     MPI_Scatter(arr, chunk_size, MPI_DOUBLE, local_array, chunk_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     CALI_MARK_END(comm_large);
+    CALI_MARK_END(comm);
 
     local_sort_start = MPI_Wtime();
-    // CALI_MARK_BEGIN(local_sort_time);
+    CALI_MARK_BEGIN(comp);
     CALI_MARK_BEGIN(comp_large);
     mergeSort(local_array, 0, chunk_size - 1);
     CALI_MARK_END(comp_large);
-    // CALI_MARK_END(local_sort_time);
+    CALI_MARK_END(comp);
     local_sort_end = MPI_Wtime();
 
     gather_start = MPI_Wtime();
-    // CALI_MARK_BEGIN(gathering);
+    CALI_MARK_BEGIN(comm);
     CALI_MARK_BEGIN(comm_large);
     MPI_Gather(local_array, chunk_size, MPI_DOUBLE, arr, chunk_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     CALI_MARK_END(comm_large);
-    // CALI_MARK_END(gathering);
+    CALI_MARK_END(comm);
     gather_end = MPI_Wtime();
 
     if (rank == 0) {
         final_sort_start = MPI_Wtime();
-        CALI_MARK_BEGIN(final_sort);
+        CALI_MARK_BEGIN(comp);
+        CALI_MARK_BEGIN(comp_large);
         mergeSort(arr, 0, array_size - 1);
-        CALI_MARK_END(final_sort);
+        CALI_MARK_END(comp_large);
+        CALI_MARK_END(comp);
         final_sort_end = MPI_Wtime();
 
         for (int i = 0; i < array_size; i++) {
@@ -159,7 +172,7 @@ int main(int argc, char **argv) {
     }
 
     whole_compute_end = MPI_Wtime();
-    CALI_MARK_END(whole_computation);
+    CALI_MARK_END(mainn);
 
     adiak::init(NULL);
     adiak::launchdate();    // launch date of the job
