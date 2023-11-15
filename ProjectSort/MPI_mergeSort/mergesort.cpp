@@ -11,9 +11,17 @@ const char* gathering = "gathering";
 const char* final_sort = "final_sort";
 const char* local_sort_time = "local_sort_time";
 const char* whole_computation = "whole_computation";
+
+const char * comp = "comp";
 const char* comp_large = "comp_large";
+const char* comm_large = "comm_large";
+const char * compSmall = "comp_small";
+const char * commSmall = "comm_small";
+const char *main = "main";
+
 
 void merge(double arr[], int l, int m, int r) {
+
     int i, j, k;
     int n1 = m - l + 1;
     int n2 = r - m;
@@ -53,6 +61,7 @@ void merge(double arr[], int l, int m, int r) {
 }
 
 void mergeSort(double arr[], int l, int r) {
+    CALI_MARK_BEGIN(comp);
     CALI_MARK_BEGIN(comp_large);
     if (l < r) {
         int m = l + (r - l) / 2;
@@ -63,6 +72,7 @@ void mergeSort(double arr[], int l, int r) {
         merge(arr, l, m, r);
     }
     CALI_MARK_END(comp_large);
+    CALI_MARK_BEGIN(comp);
 }
 
 
@@ -104,29 +114,35 @@ int main(int argc, char **argv) {
     cali::ConfigManager mgr;
     mgr.start();
 
+    CALI_MARK_BEGIN(initialization);
     if (rank == 0) {
         arr = (double *)malloc(sizeof(double) * array_size);
         init_start = MPI_Wtime();
-        CALI_MARK_BEGIN(initialization);
         for (int i = 0; i < array_size; i++) {
             arr[i] = (double)rand() / RAND_MAX;
         }
-        CALI_MARK_END(initialization);
         init_end = MPI_Wtime();
     }
+    CALI_MARK_END(initialization);
 
+    CALI_MARK_BEGIN(comm_large);
     MPI_Scatter(arr, chunk_size, MPI_DOUBLE, local_array, chunk_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    CALI_MARK_END(comm_large);
 
     local_sort_start = MPI_Wtime();
-    CALI_MARK_BEGIN(local_sort_time);
+    // CALI_MARK_BEGIN(local_sort_time);
+    CALI_MARK_BEGIN(comp_large);
     mergeSort(local_array, 0, chunk_size - 1);
-    CALI_MARK_END(local_sort_time);
+    CALI_MARK_END(comp_large);
+    // CALI_MARK_END(local_sort_time);
     local_sort_end = MPI_Wtime();
 
     gather_start = MPI_Wtime();
-    CALI_MARK_BEGIN(gathering);
+    // CALI_MARK_BEGIN(gathering);
+    CALI_MARK_BEGIN(comm_large);
     MPI_Gather(local_array, chunk_size, MPI_DOUBLE, arr, chunk_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    CALI_MARK_END(gathering);
+    CALI_MARK_END(comm_large);
+    // CALI_MARK_END(gathering);
     gather_end = MPI_Wtime();
 
     if (rank == 0) {
