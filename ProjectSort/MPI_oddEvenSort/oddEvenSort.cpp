@@ -2,7 +2,10 @@
 #include <stdio.h>
 #include <mpi.h>
 #include <stdlib.h>
-#include <algorithm> 
+#include <algorithm>
+#include <caliper/cali.h>
+#include <caliper/cali-manager.h>
+#include <adiak.hpp>
 
 // define calipher region names
 const char *main_function = "main";
@@ -24,6 +27,7 @@ int compare (const void * a, const void * b)
 }
 
 int main(int argc, char *argv[]){
+	CALI_CXX_MARK_FUNCTION;
 
 	int nump,rank;
 	int n,localn;
@@ -39,16 +43,20 @@ int main(int argc, char *argv[]){
     ierr = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     ierr = MPI_Comm_size(MPI_COMM_WORLD, &nump);
 
-      if(rank == root_process) {
-         printf("please enter the number of numbers to sort: ");
-         fflush(stdout);
-         scanf("%i", &n);
-         int avgn = n / nump;
-         localn=avgn;
+	cali::ConfigManager mgr;
+	mgr.start();
+	if (rank == root_process)
+	{
+		printf("please enter the number of numbers to sort: ");
+		fflush(stdout);
+		scanf("%i", &n);
+		int avgn = n / nump;
+		localn = avgn;
 
-		 CALI_MARK_BEGIN(data_init);
-		 data = (int *)malloc(sizeof(int) * n);
-         for(i = 0; i < n; i++) {
+		CALI_MARK_BEGIN(data_init);
+		data = (int *)malloc(sizeof(int) * n);
+		for (i = 0; i < n; i++)
+		{
             data[i] = rand()%100;
          }
 		 CALI_MARK_END(data_init);
@@ -160,6 +168,9 @@ printf("final sorted data:");
 	adiak::value("num_threads", num_threads);					 // The number of CUDA or OpenMP threads
 	adiak::value("num_blocks", num_blocks);						 // The number of CUDA blocks
 	adiak::value("group_num", group_number);					 // The number of your group (integer, e.g., 1, 10)
-	adiak::value("implementation_source", "AI ChatGPT") // Where you got the source code of your algorithm; choices: ("Online", "AI", "Handwritten").
+	adiak::value("implementation_source", "AI ChatGPT")			 // Where you got the source code of your algorithm; choices: ("Online", "AI", "Handwritten").
+
+	mgr.stop();
+	mgr.flush();
 	ierr = MPI_Finalize();
 }
