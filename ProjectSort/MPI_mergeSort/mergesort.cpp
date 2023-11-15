@@ -136,7 +136,14 @@ int main(int argc, char **argv) {
 
     CALI_MARK_BEGIN(comm);
     CALI_MARK_BEGIN(comm_large);
-    MPI_Scatter(arr, chunk_size, MPI_DOUBLE, local_array, chunk_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    if (rank == 0) {
+        for (int i = 1; i < size; i++) {
+            MPI_Send(arr + i * chunk_size, chunk_size, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
+        }
+        memcpy(local_array, arr, chunk_size * sizeof(double));
+    } else {
+        MPI_Recv(local_array, chunk_size, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
     CALI_MARK_END(comm_large);
     CALI_MARK_END(comm);
 
@@ -151,7 +158,17 @@ int main(int argc, char **argv) {
     gather_start = MPI_Wtime();
     CALI_MARK_BEGIN(comm);
     CALI_MARK_BEGIN(comm_large);
-    MPI_Gather(local_array, chunk_size, MPI_DOUBLE, arr, chunk_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    if (rank == 0) {
+        double* recv_buffer = (double *)malloc(sizeof(double) * chunk_size);
+        for (int i = 1; i < size; i++) {
+            MPI_Recv(recv_buffer, chunk_size, MPI_DOUBLE, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            memcpy(arr + i * chunk_size, recv_buffer, chunk_size * sizeof(double));
+        }
+        memcpy(arr, local_array, chunk_size * sizeof(double));
+        free(recv_buffer);
+    } else {
+        MPI_Send(local_array, chunk_size, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+    }
     CALI_MARK_END(comm_large);
     CALI_MARK_END(comm);
     gather_end = MPI_Wtime();
@@ -166,9 +183,9 @@ int main(int argc, char **argv) {
         final_sort_end = MPI_Wtime();
 
         for (int i = 0; i < array_size; i++) {
-            // printf("%.2f ", arr[i]);
+            printf("%.2f ", arr[i]);
         }
-        // printf("\n");
+        printf("\n");
     }
 
     whole_compute_end = MPI_Wtime();
@@ -190,12 +207,12 @@ int main(int argc, char **argv) {
     adiak::value("implementation_source", "AI"); // Where you got the source code of your algorithm; choices: ("Online", "AI", "Handwritten").
 
     if (rank == 0) {
-        // printf("Initialization Time: %f seconds\n", init_end - init_start);
-        // printf("Final Merge Sort Time: %f seconds\n", final_sort_end - final_sort_start);
+        printf("Initialization Time: %f seconds\n", init_end - init_start);
+        printf("Final Merge Sort Time: %f seconds\n", final_sort_end - final_sort_start);
     }
-    // printf("Local Sort Time (Rank %d): %f seconds\n", rank, local_sort_end - local_sort_start);
-    // printf("Gather Time (Rank %d): %f seconds\n", rank, gather_end - gather_start);
-    // printf("whole computation Time: %f seconds\n", whole_compute_end - whole_compute_start);
+    printf("Local Sort Time (Rank %d): %f seconds\n", rank, local_sort_end - local_sort_start);
+    printf("Gather Time (Rank %d): %f seconds\n", rank, gather_end - gather_start);
+    printf("whole computation Time: %f seconds\n", whole_compute_end - whole_compute_start);
 
     free(local_array);
     if (rank == 0) {
