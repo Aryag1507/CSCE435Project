@@ -165,5 +165,30 @@ Number of threads in a block on the GPU
 * Mainly applicable to CUDA 
 * Increase the number of blocks: {1,8,16,64,128,1024}
 
-## Note
-Due to Grace being down for several days, we were unable to generate the .cali files for all the algorithm implementations. Our team plans to generate these files once Grace is back up again. Additionally, we had some issues with parallelizing bucket sort for CUDA and MPI implementations. We plan to figure out the correct implementation for bucket sort. 
+## 3a. Caliper Instrumentation
+We used the way mentioned in the original Report.md to generate our caliper files. Comm_small and comm_large were nested in comm and then comp_small and comp_large were nested in comp.
+
+## 3b. Collect Metadata
+We used Adiak to collect all our metadata. We modified the algorithm, programming model, inputsize, input type, num_procs, num_threads, num_blocks, group_number, and implementation sort for the respective algorithm implementations.
+
+## 4a. Vary the following parameters
+
+We generated 2 caliper files with each algorithm while testing different metrics and keeping the rest constant when doing this. 
+
+For MPI Merge Sort, we changed the data size and saw the difference it makes on the time and saw that with increasing data size, the time it took to complete the whole computation increased. The computation and communication time was also relative to the whole computation time and increased with the increased data size.
+
+<img width="490" alt="Screen Shot 2023-11-15 at 11 55 24 PM" src="https://github.com/Aryag1507/CSCE435Project/assets/62392738/9e0d87c8-faa4-4b72-9644-d860bd387ff8">
+
+For MPI Radix Sort, we changed the number of processors. We noticed that increasing the number of processors helped decrease the runtime due to the workload being distributed throughout multiple processors. The computation and communication time were relative to the overall runtime, and were also decreased with the decreased overall runtime.
+
+<img width="495" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/assets/62392738/b7a19caa-c865-4efd-8e26-2c251700768f">
+
+## 4b. Hints for performance analysis
+
+Similarly, we did this for all the algorithm implementations and noticed that increasing the number of processors/threads reduced runtime, increasing the input sizes increased runtime, changing the inputTypes changed the runtime depending on the inputType. The sorted arrays were the fastest since the arrays were already sorted and nothing else was required to be done. The reverse sorted were generally the slowest since the algorithm would for sure have to change the placement of the numbers since everything was basically sorted backwards. The random and 1% perturbed were in the middle with runtime since there are random elements involved with it. The communication and computation time were relative to the whole computation time, so if the whole computation time was decreased, so was the communication and computation time.
+
+
+## Note:
+
+We were unable to get thicket to work to graph our plots, therefore we graphed what we could manually. A lot of our nodes were killed and that prevented us from completing the project with thicket.
+
