@@ -1,4 +1,3 @@
-// source: ChatGPT
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,7 +14,7 @@ const char *comp_small = "comp_small";
 
 const char *comm = "comm";
 const char *comm_large = "comm_large";
-const char *comm_small = "comm_large";
+const char *comm_small = "comm_small";
 const char *whole_computation = "whole_computation";
 
 const char* data_init = "data_init";

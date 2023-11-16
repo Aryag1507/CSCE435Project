@@ -106,6 +106,7 @@ int main(int argc, char *argv[])
 
     double init_start, init_end, local_sort_start, local_sort_end, gather_start, gather_end, final_sort_start, final_sort_end;
     double whole_compute_start, whole_compute_end;
+    double start_time, end_time;
 
     if (argc != 4)
     {
@@ -118,7 +119,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    whole_compute_start = MPI_Wtime();
+    start_time = MPI_Wtime(); // Start the timer
     CALI_MARK_BEGIN(mainn);
 
     cali::ConfigManager mgr;
@@ -144,15 +145,20 @@ int main(int argc, char *argv[])
     CALI_MARK_END(comm_large);
     CALI_MARK_END(comm);
 
+    end_time = MPI_Wtime(); // End the timer
+
     // Print sorted array from rank 0
     if (rank == 0)
     {
-        cout << "Sorted array is \n";
-        for (int i = 0; i < arraySize; i++)
-        {
-            cout << arr[i] << " ";
-        }
-        cout << endl;
+        // cout << "Sorted array is \n";
+        // for (int i = 0; i < arraySize; i++)
+        // {
+        //     cout << arr[i] << " ";
+        // }
+        // cout << endl;
+
+        double elapsed_time = end_time - start_time;
+        cout << "Total time taken: " << elapsed_time << " seconds." << endl;
     }
     CALI_MARK_END(mainn);
 
