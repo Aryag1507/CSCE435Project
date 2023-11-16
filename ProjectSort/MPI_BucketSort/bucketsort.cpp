@@ -2,6 +2,8 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <random>
+#include <chrono>
 using namespace std;
 
 #include <caliper/cali.h>
@@ -64,38 +66,32 @@ void bucketSort(float arr[], int n, int rank, int size) {
     }
 }
 
-void generateArray(float arr[], int arraySize, ArrayType type, int rank)
-{
-    srand(time(NULL) + rank); // Seed the random number generator differently for each process
+void generateArray(float arr[], int arraySize, ArrayType type, int rank) {
+    unsigned seed = chrono::system_clock::now().time_since_epoch().count() + rank;
+    mt19937 generator(seed);
 
-    switch (type)
-    {
-    case RANDOM:
-        for (int i = 0; i < arraySize; i++)
-        {
-            arr[i] = static_cast<float>(rand()) / RAND_MAX;
-        }
-        break;
-    case SORTED:
-        for (int i = 0; i < arraySize; i++)
-        {
-            arr[i] = static_cast<float>(i) / arraySize;
-        }
-        break;
-    case REVERSE_SORTED:
-        for (int i = 0; i < arraySize; i++)
-        {
-            arr[i] = static_cast<float>(arraySize - i) / arraySize;
-        }
-        break;
-    case PERTURBED:
-        for (int i = 0; i < arraySize; i++)
-        {
-            arr[i] = static_cast<float>(i) / arraySize + static_cast<float>(rand()) / (RAND_MAX * 100);
-        }
-        break;
-    default:
-        break;
+    switch (type) {
+        case RANDOM:
+            for (int i = 0; i < arraySize; ++i) {
+                arr[i] = static_cast<float>(generator()) / generator.max();
+            }
+            break;
+        case SORTED:
+            for (int i = 0; i < arraySize; ++i) {
+                arr[i] = static_cast<float>(i) / arraySize;
+            }
+            break;
+        case REVERSE_SORTED:
+            for (int i = 0; i < arraySize; ++i) {
+                arr[i] = static_cast<float>(arraySize - i - 1) / arraySize;
+            }
+            break;
+        case PERTURBED:
+            for (int i = 0; i < arraySize; ++i) {
+                arr[i] = static_cast<float>(i) / arraySize;
+                arr[i] += static_cast<float>(generator()) / (generator.max() * 100);
+            }
+            break;
     }
 }
 
