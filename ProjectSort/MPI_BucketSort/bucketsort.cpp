@@ -4,6 +4,10 @@
 #include <algorithm>
 using namespace std;
 
+#include <caliper/cali.h>
+#include <caliper/cali-manager.h>
+#include <adiak.hpp>
+
 enum ArrayType
 {
     RANDOM,
@@ -11,6 +15,22 @@ enum ArrayType
     REVERSE_SORTED,
     PERTURBED
 };
+
+const char* mainn = "main";
+const char* data_init = "data_init";
+const char* comm = "comm";
+const char* MPIBarrier = "MPI_Barrier";
+const char* comm_small = "comp_small";
+const char* comm_large = "comm_large";
+const char* MPIRecv = "MPI_Recv";
+const char* MPIGather = "MPI_Gather";
+const char* MPISend = "MPI_Send";
+const char* cudaMemcpy = "cudaMemcpy";
+
+const char* comp = "comp";
+const char* comp_small = "comp_small";
+const char* comp_large = "comp_large";
+const char* correctness_check = "correctness_check";
 
 // Function to sort arr[] of size n using bucket sort in parallel
 void bucketSort(float arr[], int n, int rank, int size) {
@@ -32,6 +52,7 @@ void bucketSort(float arr[], int n, int rank, int size) {
 
     // Gather sorted data from each process
     vector<float> all_sorted(n); // Use a vector of size n for gathering
+
     MPI_Gather(local_bucket.data(), range, MPI_FLOAT, all_sorted.data(), range, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
     // Only rank 0 will have the complete sorted data
@@ -80,11 +101,15 @@ void generateArray(float arr[], int arraySize, ArrayType type, int rank)
 
 int main(int argc, char *argv[])
 {
+    CALI_CXX_MARK_FUNCTION;
     MPI_Init(&argc, &argv);
 
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    double init_start, init_end, local_sort_start, local_sort_end, gather_start, gather_end, final_sort_start, final_sort_end;
+    double whole_compute_start, whole_compute_end;
 
     if (argc != 4)
     {
@@ -97,16 +122,31 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    whole_compute_start = MPI_Wtime();
+    CALI_MARK_BEGIN(mainn);
+
+    cali::ConfigManager mgr;
+    mgr.start();
+
     int arraySize = atoi(argv[1]);
     int numProcessors = atoi(argv[2]);
     ArrayType type = static_cast<ArrayType>(atoi(argv[3]));
 
     float *arr = new float[arraySize];
 
+    init_start = MPI_Wtime();
+    CALI_MARK_BEGIN(data_init);
     // Generate array based on user's choice
     generateArray(arr, arraySize, type, rank);
+    init_end = MPI_Wtime();
+    CALI_MARK_END(data_init);
 
+
+    CALI_MARK_BEGIN(comm);
+    CALI_MARK_BEGIN(comm_large);
     bucketSort(arr, arraySize, rank, size);
+    CALI_MARK_END(comm_large);
+    CALI_MARK_END(comm);
 
     // Print sorted array from rank 0
     if (rank == 0)
@@ -118,8 +158,28 @@ int main(int argc, char *argv[])
         }
         cout << endl;
     }
+    CALI_MARK_END(mainn);
+
+    adiak::init(NULL);
+    adiak::launchdate();    // launch date of the job
+    adiak::libraries();     // Libraries used
+    adiak::cmdline();       // Command line used to launch the job
+    adiak::clustername();   // Name of the cluster
+    adiak::value("Algorithm", "bucketSort"); // The name of the algorithm you are using (e.g., "MergeSort", "BitonicSort")
+    adiak::value("ProgrammingModel", "MPI"); // e.g., "MPI", "CUDA", "MPIwithCUDA"
+    adiak::value("Datatype", "double"); // The datatype of input elements (e.g., double, int, float)
+    adiak::value("SizeOfDatatype", sizeof(double)); // sizeof(datatype) of input elements in bytes (e.g., 1, 2, 4)
+    adiak::value("InputSize", array_size); // The number of elements in input dataset (1000)
+    adiak::value("InputType", "Random"); // For sorting, this would be "Sorted", "ReverseSorted", "Random", "1%perturbed"
+    adiak::value("num_procs", size); // The number of processors (MPI ranks)
+    adiak::value("group_num", 2); // The number of your group (integer, e.g., 1, 10)
+    adiak::value("implementation_source", "Online/AI"); // Where you got the source code of your algorithm; choices: ("Online", "AI", "Handwritten").
 
     delete[] arr;
+
+    mgr.stop();
+    mgr.flush();
     MPI_Finalize();
+
     return 0;
 }
