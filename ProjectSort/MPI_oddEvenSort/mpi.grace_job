@@ -19,6 +19,7 @@
 array_size=$1
 processes=$2
 input=$3
+
 module load intel/2020b       # load Intel software stack
 module load CMake/3.12.1
 
