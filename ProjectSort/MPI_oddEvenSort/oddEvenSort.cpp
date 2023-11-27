@@ -57,10 +57,6 @@ void initialize_array(int local_A[], int local_n, int my_rank, int input_type)
 
 void Print_global_list(int local_A[], int local_n, int my_rank, int p, MPI_Comm comm)
 {
-
-	CALI_MARK_BEGIN("comm");
-	CALI_MARK_BEGIN("comm_large");
-
 	int *A;
 	int i, n;
 
@@ -84,9 +80,6 @@ void Print_global_list(int local_A[], int local_n, int my_rank, int p, MPI_Comm 
 		MPI_Gather(local_A, local_n, MPI_INT, A, local_n, MPI_INT, 0,
 				   comm);
 	}
-
-	CALI_MARK_END("comm_large");
-	CALI_MARK_END("comm");
 }
 
 void Merge_low(int local_A[], int temp_B[], int temp_C[], int local_n)
@@ -182,10 +175,9 @@ void Odd_even_iter(int local_A[], int temp_B[], int temp_C[],
 				   int my_rank, int p, MPI_Comm comm)
 {
 	MPI_Status status;
-
 	CALI_MARK_BEGIN("comm");
-	CALI_MARK_BEGIN("comm_small");
-
+	CALI_MARK_BEGIN("comm_large");
+	CALI_MARK_BEGIN("MPI_Send/recive");
 	if (phase % 2 == 0)
 	{ /* even phase */
 		if (even_partner >= 0)
@@ -226,10 +218,9 @@ void Odd_even_iter(int local_A[], int temp_B[], int temp_C[],
 				Merge_high(local_A, temp_B, temp_C, local_n);
 		}
 	}
-
-	CALI_MARK_END("comm_small");
+	CALI_MARK_END("MPI_Send/recive");
+	CALI_MARK_END("comm_large");
 	CALI_MARK_END("comm");
-
 } /* Odd_even_iter */
 
 void Sort(int local_A[], int local_n, int my_rank,
@@ -261,9 +252,8 @@ void Sort(int local_A[], int local_n, int my_rank,
 	}
 
 	/* Sort local list using built-in quick sort */
-	CALI_MARK_BEGIN("comp");
 	qsort(local_A, local_n, sizeof(int), Compare);
-	CALI_MARK_END("comp");
+
 
 	for (phase = 0; phase < p; phase++)
 		Odd_even_iter(local_A, temp_B, temp_C, local_n, phase,
@@ -317,16 +307,13 @@ void isSorted(int local_A[], int local_n, int my_rank, int p, MPI_Comm comm)
 	if (my_rank == 0)
 		global_A = (int *)malloc(global_n * sizeof(int));
 
-	CALI_MARK_BEGIN("comm");
-	CALI_MARK_BEGIN("comm_large");
 	MPI_Gather(local_A, local_n, MPI_INT, global_A, local_n, MPI_INT, 0, comm);
-	CALI_MARK_END("comm_large");
-	CALI_MARK_END("comm");
+	
 
 	if (my_rank == 0)
 	{
 
-		CALI_MARK_BEGIN("correctness_check");
+	
 		for (int i = 0; i < global_n - 1; i++)
 		{
 			if (global_A[i] > global_A[i + 1])
@@ -335,7 +322,6 @@ void isSorted(int local_A[], int local_n, int my_rank, int p, MPI_Comm comm)
 				break;
 			}
 		}
-		CALI_MARK_END("correctness_check");
 
 		free(global_A);
 	}
@@ -344,7 +330,8 @@ void isSorted(int local_A[], int local_n, int my_rank, int p, MPI_Comm comm)
 int main(int argc, char *argv[])
 {
 
-	CALI_MARK_BEGIN("whole_computation");
+	CALI_CXX_MARK_FUNCTION;
+	CALI_MARK_BEGIN("main");
 
 	int my_rank, p; // rank, number processes
 	int *local_A;	// local list: size of local number of elements * size of int
@@ -358,6 +345,9 @@ int main(int argc, char *argv[])
 	MPI_Comm_size(comm, &p);
 	MPI_Comm_rank(comm, &my_rank);
 
+	cali::ConfigManager mgr;
+	mgr.start();
+
 	if (argc != 3)
 	{
 		if (my_rank == 0)
@@ -368,7 +358,7 @@ int main(int argc, char *argv[])
 		return 1; // Exit if the incorrect number of arguments are provided
 	}
 
-	CALI_MARK_BEGIN("initialization");
+	
 
 	global_n = atoi(argv[1]);	// Get the total number of elements
 	input_type = atoi(argv[2]); // Get the input type
@@ -395,13 +385,20 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	
+	CALI_MARK_BEGIN("data_init");
 	initialize_array(local_A, local_n, my_rank, input_type);
+	CALI_MARK_BEGIN("data_init");
 
-	CALI_MARK_END("initialization");
-
+	CALI_MARK_BEGIN("comp");
+	CALI_MARK_BEGIN("comp_large");
 	Sort(local_A, local_n, my_rank, p, comm);
+	CALI_MARK_END("comp_large");
+	CALI_MARK_END("comp");
 
+	CALI_MARK_BEGIN("correctness_check");
 	isSorted(local_A, local_n, my_rank, p, comm);
+	CALI_MARK_END("correctness_check");
 
 	Print_global_list(local_A, local_n, my_rank, p, comm);
 
@@ -422,9 +419,10 @@ int main(int argc, char *argv[])
 	adiak::value("group_num", 2);
 	adiak::value("implementation_source", "Online/Handwritten");
 
+	mgr.stop();
+	mgr.flush();
 	MPI_Finalize();
-
-	CALI_MARK_END("whole_computation");
+	CALI_MARK_END("main");
 
 	return 0;
 } /* main */
