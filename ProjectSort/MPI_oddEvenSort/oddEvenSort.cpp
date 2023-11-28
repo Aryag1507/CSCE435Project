@@ -177,11 +177,11 @@ void Odd_even_iter(int local_A[], int temp_B[], int temp_C[],
 	MPI_Status status;
 	CALI_MARK_BEGIN("comm");
 	CALI_MARK_BEGIN("comm_large");
-	CALI_MARK_BEGIN("MPI_Send/recive");
+	CALI_MARK_BEGIN("MPI_Send/recieve");
 	if (phase % 2 == 0)
 	{ /* even phase */
 		if (even_partner >= 0)
-		{	/* check for even partner */
+		{ /* check for even partner */
 			//
 			//
 			//
@@ -202,7 +202,7 @@ void Odd_even_iter(int local_A[], int temp_B[], int temp_C[],
 	else
 	{ /* odd phase */
 		if (odd_partner >= 0)
-		{	/* check for odd partner */
+		{ /* check for odd partner */
 			//
 			//
 			//
@@ -218,7 +218,7 @@ void Odd_even_iter(int local_A[], int temp_B[], int temp_C[],
 				Merge_high(local_A, temp_B, temp_C, local_n);
 		}
 	}
-	CALI_MARK_END("MPI_Send/recive");
+	CALI_MARK_END("MPI_Send/recieve");
 	CALI_MARK_END("comm_large");
 	CALI_MARK_END("comm");
 } /* Odd_even_iter */
@@ -253,7 +253,6 @@ void Sort(int local_A[], int local_n, int my_rank,
 
 	/* Sort local list using built-in quick sort */
 	qsort(local_A, local_n, sizeof(int), Compare);
-
 
 	for (phase = 0; phase < p; phase++)
 		Odd_even_iter(local_A, temp_B, temp_C, local_n, phase,
@@ -308,12 +307,10 @@ void isSorted(int local_A[], int local_n, int my_rank, int p, MPI_Comm comm)
 		global_A = (int *)malloc(global_n * sizeof(int));
 
 	MPI_Gather(local_A, local_n, MPI_INT, global_A, local_n, MPI_INT, 0, comm);
-	
 
 	if (my_rank == 0)
 	{
 
-	
 		for (int i = 0; i < global_n - 1; i++)
 		{
 			if (global_A[i] > global_A[i + 1])
@@ -358,8 +355,6 @@ int main(int argc, char *argv[])
 		return 1; // Exit if the incorrect number of arguments are provided
 	}
 
-	
-
 	global_n = atoi(argv[1]);	// Get the total number of elements
 	input_type = atoi(argv[2]); // Get the input type
 
@@ -385,10 +380,9 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	
 	CALI_MARK_BEGIN("data_init");
 	initialize_array(local_A, local_n, my_rank, input_type);
-	CALI_MARK_BEGIN("data_init");
+	CALI_MARK_END("data_init");
 
 	CALI_MARK_BEGIN("comp");
 	CALI_MARK_BEGIN("comp_large");
