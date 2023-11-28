@@ -31,7 +31,7 @@ void rng(int* arr, int n, string input) {
         int seed = 13516095;
         srand(seed);
         for(long i = 0; i < n; i++) {
-            arr[i] = (int)rand();
+            arr[i] = (int)rand() % 10000;
         }
     } else if(input == "sorted"){
         for (int i = 0; i < n; i++) {
@@ -112,9 +112,6 @@ int main(int argc, char** argv) {
     string input_type = argv[3];
 
     int* h_data = (int*)malloc(array_length * sizeof(int));
-
-    double init_start, init_end;
-    double comp_large_begin, comp_large_end;
 
     cali::ConfigManager mgr;
     mgr.start();

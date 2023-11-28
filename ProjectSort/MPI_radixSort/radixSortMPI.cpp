@@ -200,9 +200,6 @@ int main(int argc, char *argv[]) {
     whole_compute_end = MPI_Wtime();
     CALI_MARK_END(whole_computation);
 
-    // printf("Local Sort Time (Rank %d): %f seconds\n", rank, complete_sort_end - complete_sort_start);
-    printf("Whole computation Time: %f seconds\n", whole_compute_end - whole_compute_start);
-
     adiak::init(NULL);
     adiak::launchdate();    // launch date of the job
     adiak::libraries();     // Libraries used
