@@ -150,11 +150,19 @@ void gpuMergeSort(float* hostArray, int size, int numThreads, int subArraySize, 
     cudaEventRecord(start);
 
     // Copy data to device
+    CALI_MARK_BEGIN(comm);
+    CALI_MARK_BEGIN(comm_large);
+    CALI_MARK_BEGIN(cuda_memcpy);
     cudaMemcpy(deviceArray, hostArray, size * sizeof(float), cudaMemcpyHostToDevice);
+    CALI_MARK_END(cuda_memcpy);
+    CALI_MARK_END(comm_large);
+    CALI_MARK_END(comm);
 
     dim3 blockSize(numThreads);
     dim3 gridSize((subArraySize + blockSize.x - 1) / blockSize.x);
 
+    CALI_MARK_BEGIN(comp);
+    CALI_MARK_BEGIN(comp_large);
     for (int width = 1; width < subArraySize; width *= 2) {
         for (int start = 0; start < size; start += subArraySize) {
             mergeKernel<<<gridSize, blockSize>>>(deviceArray + start, auxArray + start, subArraySize, width);
@@ -162,9 +170,17 @@ void gpuMergeSort(float* hostArray, int size, int numThreads, int subArraySize, 
         cudaDeviceSynchronize(); 
         cudaMemcpy(deviceArray, auxArray, size * sizeof(float), cudaMemcpyDeviceToDevice);
     }
+    CALI_MARK_END(comp_large);
+    CALI_MARK_END(comp);
 
+    CALI_MARK_BEGIN(comm);
+    CALI_MARK_BEGIN(comm_large);
+    CALI_MARK_BEGIN(cuda_memcpy);
     // Copy data back to host
     cudaMemcpy(hostArray, deviceArray, size * sizeof(float), cudaMemcpyDeviceToHost);
+    CALI_MARK_END(cuda_memcpy);
+    CALI_MARK_END(comm_large);
+    CALI_MARK_END(comm);
 
     // End measuring time
     cudaEventRecord(stop);
@@ -205,6 +221,7 @@ int main(int argc, char **argv) {
     // Parse command line arguments
     int numThreads = atoi(argv[1]);
     int size = atoi(argv[2]);
+    const char* input_type = argv[3];
     InputType inputType = static_cast<InputType>(atoi(argv[3]));
 
     if (numThreads <= 0 || size <= 0 || inputType < SORTED || inputType > PERTURBED) {
@@ -219,14 +236,20 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    cali::ConfigManager mgr;
+    mgr.start();
+
+    CALI_MARK_BEGIN(mainn);
+
     // Generate input data
+    CALI_MARK_BEGIN(data_init);
     generateInput(hostArray, inputType, size);
+    CALI_MARK_END(data_init);
 
     // Array to store GPU times and operation count
     float gpuTimes[10]; // Assuming a maximum of 10 GPU operations
     int gpuOps = 0;
 
-    // Set the size of subarrays to be sorted on the GPU
     int subArraySize = 1024; // Adjust as needed
 
     // Perform hybrid merge sort
@@ -250,6 +273,8 @@ int main(int argc, char **argv) {
         if (gpuTimes[i] > maxGPUTime) maxGPUTime = gpuTimes[i];
     }
 
+    CALI_MARK_END(mainn);
+
     adiak::init(NULL);
     adiak::launchdate();    // launch date of the job
     adiak::libraries();     // Libraries used
@@ -270,7 +295,10 @@ int main(int argc, char **argv) {
     printf("Min GPU time/rank: %f ms\n", minGPUTime);
     printf("Max GPU time/rank: %f ms\n", maxGPUTime);
     printf("Total GPU time: %f ms\n", totalGPUTime);
-
+    
+    
+    mgr.stop();
+    mgr.flush();
     // Free the allocated memory
     free(hostArray);
 
