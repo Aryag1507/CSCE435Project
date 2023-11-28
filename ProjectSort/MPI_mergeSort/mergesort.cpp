@@ -22,7 +22,7 @@ const char* MPISend = "MPI_Send";
 const char* comp = "comp";
 const char* comp_small = "comp_small";
 const char* comp_large = "comp_large";
-const char* correctness_check = "correctness_check";
+const char* correctness_Check = "correctness_check";
 
 void merge(double arr[], int l, int m, int r) {
 
@@ -71,11 +71,7 @@ void mergeSort(double arr[], int l, int r) {
         mergeSort(arr, l, m);
         mergeSort(arr, m + 1, r);
 
-        // CALI_MARK_BEGIN(comp);
-        // CALI_MARK_BEGIN(comp_small);
         merge(arr, l, m, r);
-        // CALI_MARK_END(comp_small);
-        // CALI_MARK_END(comp);
     }
 }
 
@@ -183,14 +179,14 @@ int main(int argc, char **argv) {
         final_sort_elapsed = final_sort_end - final_sort_start;
 
         // Check for correctness
-        CALI_MARK_BEGIN(correctness_check);
+        CALI_MARK_BEGIN(correctness_Check);
         bool is_sorted = correctness_check(arr, array_size);
         if (is_sorted) {
             printf("The array is correctly sorted.\n");
         } else {
             printf("Error: The array is not correctly sorted.\n");
         }
-        CALI_MARK_END(correctness_check);
+        CALI_MARK_END(correctness_Check);
 
         // Optionally, print sorted array
         // for (int i = 0; i < array_size; i++) {
@@ -216,7 +212,7 @@ int main(int argc, char **argv) {
     adiak::value("Datatype", "double"); // The datatype of input elements (e.g., double, int, float)
     adiak::value("SizeOfDatatype", sizeof(double)); // sizeof(datatype) of input elements in bytes (e.g., 1, 2, 4)
     adiak::value("InputSize", array_size); // The number of elements in input dataset (1000)
-    adiak::value("InputType", "Sorted"); // For sorting, this would be "Sorted", "ReverseSorted", "Random", "1%perturbed"
+    adiak::value("InputType", input_type); // For sorting, this would be "Sorted", "ReverseSorted", "Random", "1%perturbed"
     adiak::value("num_procs", size); // The number of processors (MPI ranks)
     adiak::value("group_num", 2); // The number of your group (integer, e.g., 1, 10)
     adiak::value("implementation_source", "AI"); // Where you got the source code of your algorithm; choices: ("Online", "AI", "Handwritten").
