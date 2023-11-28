@@ -10,7 +10,6 @@
 #include <caliper/cali-manager.h>
 #include <adiak.hpp>
 
-const char* mainn = "main";
 const char* data_init = "data_init";
 const char* comm = "comm";
 const char* MPIBarrier = "MPI_Barrier";
