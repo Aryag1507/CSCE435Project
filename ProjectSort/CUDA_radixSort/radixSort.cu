@@ -5,10 +5,13 @@
 #include <stdlib.h>
 #include <cuda_runtime.h>
 #include <time.h>
+#include <string.h>
 
 #include <caliper/cali.h>
 #include <caliper/cali-manager.h>
 #include <adiak.hpp>
+
+using namespace std;
 
 const char *comp = "comp";
 const char *comp_large = "comp_large";
@@ -22,6 +25,35 @@ const char *whole_computation = "whole_computation";
 const char* data_init = "data_init";
 
 double whole_compute_start, whole_compute_end;
+
+void rng(int* arr, int n, string input) {
+    if(input == "random"){
+        int seed = 13516095;
+        srand(seed);
+        for(long i = 0; i < n; i++) {
+            arr[i] = (int)rand();
+        }
+    } else if(input == "sorted"){
+        for (int i = 0; i < n; i++) {
+            arr[i] = i;
+        }
+    } else if(input == "reverse_sorted"){
+        for (int i = 0; i < n; i++) {
+            arr[i] = n - i - 1;
+        }
+    } else if(input == "one_percent"){
+        for (int i = 0; i < n; i++) {
+            arr[i] = i;
+        }
+        for (int i = 0; i < n / 100; i++) {
+            int idx1 = random() % n;
+            int idx2 = random() % n;
+            int temp = arr[idx1];
+            arr[idx1] = arr[idx2];
+            arr[idx2] = temp;
+        }
+    }
+}
 
 #define CUDA_CHECK(call) \
     do { \
@@ -68,7 +100,7 @@ __global__ void radixSort(int* d_data, int* d_output, int numElements) {
 }
 
 int main(int argc, char** argv) {
-    if (argc != 3) {
+    if (argc != 4) {
         printf("Usage: %s <array_length> <num_threads>\n", argv[0]);
         return EXIT_FAILURE;
     }
@@ -77,11 +109,15 @@ int main(int argc, char** argv) {
 
     int array_length = atoi(argv[1]);
     int num_threads = atoi(argv[2]);
+    string input_type = argv[3];
 
     int* h_data = (int*)malloc(array_length * sizeof(int));
 
     double init_start, init_end;
     double comp_large_begin, comp_large_end;
+
+    cali::ConfigManager mgr;
+    mgr.start();
 
     CALI_MARK_BEGIN(data_init);
 
@@ -89,6 +125,8 @@ int main(int argc, char** argv) {
     for (int i = 0; i < array_length; ++i) {
         h_data[i] = rand();
     }
+
+    rng(h_data, array_length, input_type);
 
     CALI_MARK_END(data_init);
 
@@ -151,7 +189,7 @@ int main(int argc, char** argv) {
     adiak::value("Datatype", "double"); // The datatype of input elements (e.g., double, int, float)
     adiak::value("SizeOfDatatype", sizeof(double)); // sizeof(datatype) of input elements in bytes (e.g., 1, 2, 4)
     adiak::value("InputSize", array_length); // The number of elements in input dataset (1000)
-    adiak::value("InputType", "Random"); // For sorting, this would be "Sorted", "ReverseSorted", "Random", "1%perturbed"
+    adiak::value("InputType", input_type); // For sorting, this would be "Sorted", "ReverseSorted", "Random", "1%perturbed"
     adiak::value("num_procs", num_threads); // The number of processors (MPI ranks)
     adiak::value("group_num", 2); // The number of your group (integer, e.g., 1, 10)
     adiak::value("implementation_source", "AI"); // Where you got the source code of your algorithm; choices: ("Online", "AI", "Handwritten").
