@@ -10,7 +10,7 @@
 
 const char *data_init = "data_init";
 const char *comp = "comp";
-const char *main = "main";
+const char *mainComp = "main";
 const char *comp_large = "comp_large";
 
 void initializeArray(int *array, int size, int input_type) {
@@ -19,7 +19,7 @@ void initializeArray(int *array, int size, int input_type) {
     switch (input_type) {
         case 1: // Random array
             for (int i = 0; i < size; i++) {
-                array[i] = rand() % 1000; // Random number between 0 and 999
+                array[i] = rand() % 100000;
             }
             break;
 
@@ -42,7 +42,9 @@ void initializeArray(int *array, int size, int input_type) {
             for (int i = 0; i < size / 100; i++) {
                 int idx1 = rand() % size;
                 int idx2 = rand() % size;
-                swap(array[idx1], array[idx2]);
+                int temp = array[idx1];
+                array[idx1] = array[idx2];
+                array[idx2] = temp;
             }
             break;
 
@@ -117,7 +119,7 @@ int main(int argc, char **argv)
 {
     
     CALI_CXX_MARK_FUNCTION;
-    CALI_MARK_BEGIN(main);
+    CALI_MARK_BEGIN(mainComp);
 
     int *a, *d, n, *c;
     int threadsPerBlock;
@@ -198,7 +200,7 @@ int main(int argc, char **argv)
     mgr.stop();
     mgr.flush();
 
-    CALI_MARK_END(main);
+    CALI_MARK_END(mainComp);
 
     return 0;
 }

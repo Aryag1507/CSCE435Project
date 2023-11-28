@@ -59,6 +59,7 @@
   "files.associations": {
     "ratio": "cpp",
     "vector": "cpp",
-    "xutility": "cpp"
+    "xutility": "cpp",
+    "random": "cpp"
   }
 }
