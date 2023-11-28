@@ -9,55 +9,70 @@
 #include <caliper/cali-manager.h>
 #include <adiak.hpp>
 
+const char* mainn = "main";
+const char* data_init = "data_init";
+const char* comm = "comm";
+const char* MPIBarrier = "MPI_Barrier";
+const char* comm_small = "comm_small";
+const char* comm_large = "comm_large";
+const char* MPIRecv = "MPI_Recv";
+const char* MPISend = "MPI_Send";
+
+const char* cuda_memcpy = "cudaMemcpy";
+
+const char* comp = "comp";
+const char* comp_small = "comp_small";
+const char* comp_large = "comp_large";
+const char* correctness_check = "correctness_check";
 
 enum InputType { SORTED, RANDOM, REVERSE_SORTED, PERTURBED };
 
 // Function to generate input data
-void generateInput(int* array, InputType type, int size) {
+void generateInput(float* array, InputType type, int size) {
     srand(time(NULL)); // Seed for random number generation
 
     switch(type) {
         case SORTED:
             // Generate a sorted array
             for(int i = 0; i < size; i++) {
-                array[i] = i;
+                array[i] = (float)i / size;
             }
             break;
 
         case RANDOM:
             // Generate a random array
             for(int i = 0; i < size; i++) {
-                array[i] = rand() % size;
+                array[i] = (float)rand() / RAND_MAX;
             }
             break;
 
         case REVERSE_SORTED:
             // Generate a reverse sorted array
             for(int i = 0; i < size; i++) {
-                array[i] = size - i - 1;
+                array[i] = (float)(size - i - 1) / size;
             }
             break;
 
         case PERTURBED:
             // Generate a mostly sorted array with a few random elements
             for(int i = 0; i < size; i++) {
-                array[i] = i;
+                array[i] = (float)i / size;
             }
             // Perturb about 1% of the elements
             for(int i = 0; i < size / 100; i++) {
                 int index = rand() % size;
-                array[index] = rand() % size;
+                array[index] = (float)rand() / RAND_MAX;
             }
             break;
 
         default:
             printf("Invalid input type\n");
-            break; // Add 'break' here
+            break;
     }
 }
 
 // CUDA Kernel for Merge Sort
-__global__ void mergeKernel(int* deviceArray, int* auxArray, int size, int width) {
+__global__ void mergeKernel(float* deviceArray, float* auxArray, int size, int width) {
     int threadId = blockIdx.x * blockDim.x + threadIdx.x;
     int start = threadId * width * 2;
 
@@ -89,12 +104,11 @@ __global__ void mergeKernel(int* deviceArray, int* auxArray, int size, int width
     }
 }
 
-
-void merge(int* array, int left, int middle, int right) {
+void merge(float* array, int left, int middle, int right) {
     int n1 = middle - left + 1;
     int n2 = right - middle;
-    int* L = (int*)malloc(n1 * sizeof(int));
-    int* R = (int*)malloc(n2 * sizeof(int));
+    float* L = (float*)malloc(n1 * sizeof(float));
+    float* R = (float*)malloc(n2 * sizeof(float));
 
     for (int i = 0; i < n1; i++)
         L[i] = array[left + i];
@@ -121,12 +135,22 @@ void merge(int* array, int left, int middle, int right) {
     free(R);
 }
 
-void gpuMergeSort(int* hostArray, int size, int numThreads, int subArraySize) {
-    int* deviceArray;
-    int* auxArray;
-    cudaMalloc(&deviceArray, size * sizeof(int));
-    cudaMalloc(&auxArray, size * sizeof(int));
-    cudaMemcpy(deviceArray, hostArray, size * sizeof(int), cudaMemcpyHostToDevice);
+void gpuMergeSort(float* hostArray, int size, int numThreads, int subArraySize, float* gpuTimes, int* gpuOps) {
+    float* deviceArray;
+    float* auxArray;
+    cudaMalloc(&deviceArray, size * sizeof(float));
+    cudaMalloc(&auxArray, size * sizeof(float));
+
+    // CUDA event creation
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    
+    // Start measuring time
+    cudaEventRecord(start);
+
+    // Copy data to device
+    cudaMemcpy(deviceArray, hostArray, size * sizeof(float), cudaMemcpyHostToDevice);
 
     dim3 blockSize(numThreads);
     dim3 gridSize((subArraySize + blockSize.x - 1) / blockSize.x);
@@ -136,19 +160,33 @@ void gpuMergeSort(int* hostArray, int size, int numThreads, int subArraySize) {
             mergeKernel<<<gridSize, blockSize>>>(deviceArray + start, auxArray + start, subArraySize, width);
         }
         cudaDeviceSynchronize(); 
-        cudaMemcpy(deviceArray, auxArray, size * sizeof(int), cudaMemcpyDeviceToDevice);
+        cudaMemcpy(deviceArray, auxArray, size * sizeof(float), cudaMemcpyDeviceToDevice);
     }
 
-    cudaMemcpy(hostArray, deviceArray, size * sizeof(int), cudaMemcpyDeviceToHost);
+    // Copy data back to host
+    cudaMemcpy(hostArray, deviceArray, size * sizeof(float), cudaMemcpyDeviceToHost);
 
+    // End measuring time
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+
+    // Calculating time
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    gpuTimes[*gpuOps] = milliseconds; // Store the time
+    (*gpuOps)++; // Increment the operation count
+
+    // Clean up
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
     cudaFree(deviceArray);
     cudaFree(auxArray);
 }
 
+void hybridMergeSort(float* hostArray, int size, int numThreads, int subArraySize, float* gpuTimes, int* gpuOps) {
+    gpuMergeSort(hostArray, size, numThreads, subArraySize, gpuTimes, gpuOps);
 
-void hybridMergeSort(int* hostArray, int size, int numThreads, int subArraySize) {
-    gpuMergeSort(hostArray, size, numThreads, subArraySize);
-
+    // CPU-based merge for larger sections
     for (int width = subArraySize; width < size; width *= 2) {
         for (int i = 0; i < size; i += 2 * width) {
             int mid = min(i + width - 1, size - 1);
@@ -175,30 +213,72 @@ int main(int argc, char **argv) {
     }
 
     // Allocate memory for the array
-    int* hostArray = (int*)malloc(sizeof(int) * size);
+    float* hostArray = (float*)malloc(sizeof(float) * size);
     if (hostArray == NULL) {
         fprintf(stderr, "Failed to allocate host memory\n");
         return 1;
     }
 
-    // Generate input data based on the specified type
+    // Generate input data
     generateInput(hostArray, inputType, size);
 
-    // Set the size of subarrays to be sorted on the GPU (you can adjust this based on your needs)
-    int subArraySize = 1024;
+    // Array to store GPU times and operation count
+    float gpuTimes[10]; // Assuming a maximum of 10 GPU operations
+    int gpuOps = 0;
 
-    // Call the hybrid merge sort function
-    hybridMergeSort(hostArray, size, numThreads, subArraySize);
+    // Set the size of subarrays to be sorted on the GPU
+    int subArraySize = 1024; // Adjust as needed
 
-    // Print the sorted array
-    printf("Sorted Array:\n");
-    for (int i = 0; i < size; i++) {
-        printf("%d ", hostArray[i]);
+    // Perform hybrid merge sort
+    hybridMergeSort(hostArray, size, numThreads, subArraySize, gpuTimes, &gpuOps);
+
+    // Check if the array is sorted
+    bool isSorted = true;
+    for (int i = 0; i < size - 1; i++) {
+        if (hostArray[i] > hostArray[i + 1]) {
+            isSorted = false;
+            break;
+        }
     }
-    printf("\n");
+    printf("Array is %s\n", isSorted ? "correctly sorted" : "not correctly sorted");
+
+    // Calculate and print GPU times
+    float totalGPUTime = 0, minGPUTime = FLT_MAX, maxGPUTime = FLT_MIN;
+    for (int i = 0; i < gpuOps; i++) {
+        totalGPUTime += gpuTimes[i];
+        if (gpuTimes[i] < minGPUTime) minGPUTime = gpuTimes[i];
+        if (gpuTimes[i] > maxGPUTime) maxGPUTime = gpuTimes[i];
+    }
+
+    adiak::init(NULL);
+    adiak::launchdate();    // launch date of the job
+    adiak::libraries();     // Libraries used
+    adiak::cmdline();       // Command line used to launch the job
+    adiak::clustername();   // Name of the cluster
+    adiak::value("Algorithm", "MergeSort"); // The name of the algorithm you are using (e.g., "MergeSort", "BitonicSort")
+    adiak::value("ProgrammingModel", "CUDA"); // e.g., "MPI", "CUDA", "MPIwithCUDA"
+    adiak::value("Datatype", "float"); // The datatype of input elements (e.g., double, int, float)
+    adiak::value("SizeOfDatatype", sizeof(float)); // sizeof(datatype) of input elements in bytes (e.g., 1, 2, 4)
+    adiak::value("InputSize", size); // The number of elements in input dataset (1000)
+    adiak::value("InputType", input_type); // For sorting, this would be "Sorted", "ReverseSorted", "Random", "1%perturbed"
+    adiak::value("num_threads", numThreads); // The number of CUDA or OpenMP threads
+    // adiak::value("num_blocks", BLOCKS); // The number of CUDA blocks 
+    adiak::value("group_num", 2); // The number of your group (integer, e.g., 1, 10)
+    adiak::value("implementation_source", "AI"); // Where you got the source code of your algorithm; choices: ("Online", "AI", "Handwritten").
+    
+    printf("Avg GPU time/rank: %f ms\n", totalGPUTime / gpuOps);
+    printf("Min GPU time/rank: %f ms\n", minGPUTime);
+    printf("Max GPU time/rank: %f ms\n", maxGPUTime);
+    printf("Total GPU time: %f ms\n", totalGPUTime);
 
     // Free the allocated memory
     free(hostArray);
 
     return 0;
 }
+
+
+/*
+
+
+*/
