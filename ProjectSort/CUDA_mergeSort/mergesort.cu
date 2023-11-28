@@ -5,9 +5,6 @@
 #include <cuda.h>
 #include <float.h>
 
-#include <stdlib.h>
-#include <time.h>
-
 #include <caliper/cali.h>
 #include <caliper/cali-manager.h>
 #include <adiak.hpp>
@@ -99,41 +96,46 @@ int NUM_VALS;
 
 __global__ void mergeKernel(float *dev_values, int size, int mid, int upper) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx >= upper) return; // Check if the thread is within the range
+    if (idx >= upper) return; // Ensure the thread is within the range
 
-    // Calculate starting points of the two halves
+    // Calculate the starting points of the two halves
     int start1 = idx > mid ? mid : idx;
     int start2 = idx > mid ? idx : mid;
     int end1 = mid, end2 = upper;
 
-    // Temporary array for merged result
+    // Calculate the size needed for the temporary array in shared memory
+    int tempSize = upper - start1;
     extern __shared__ float temp[];
 
-    // Indexes for traversing
-    int i = start1, j = start2, k = start1;
+    // Ensure the temporary array doesn't exceed the shared memory size
+    if (threadIdx.x < tempSize) {
+        // Merge the two halves into temp
+        int i = start1, j = start2, k = 0;
+        while (i < end1 && j < end2) {
+            if (dev_values[i] < dev_values[j]) {
+                temp[k++] = dev_values[i++];
+            } else {
+                temp[k++] = dev_values[j++];
+            }
+        }
 
-    // Merge the two halves
-    while (i < end1 && j < end2) {
-        if (dev_values[i] < dev_values[j]) {
+        // Copy the remaining elements of the first half, if any
+        while (i < end1) {
             temp[k++] = dev_values[i++];
-        } else {
+        }
+
+        // Copy the remaining elements of the second half, if any
+        while (j < end2) {
             temp[k++] = dev_values[j++];
         }
-    }
 
-    // Copy the remaining elements of the first half, if any
-    while (i < end1) {
-        temp[k++] = dev_values[i++];
-    }
+        // Synchronize threads in the block to ensure sorting is done
+        __syncthreads();
 
-    // Copy the remaining elements of the second half, if any
-    while (j < end2) {
-        temp[k++] = dev_values[j++];
-    }
-
-    // Copy back the merged elements to the original array
-    for (i = start1; i < k; i++) {
-        dev_values[i] = temp[i];
+        // Copy back the merged elements to the original array
+        for (i = start1 + threadIdx.x; i < upper; i += blockDim.x) {
+            dev_values[i] = temp[i - start1];
+        }
     }
 }
 
@@ -141,10 +143,8 @@ void mergeSort(float *dev_values, int size) {
     dim3 threads(THREADS, 1);
     dim3 blocks(BLOCKS, 1);
 
-    // CALI_MARK_BEGIN(comp);
-    // CALI_MARK_BEGIN(comp_large);
     for (int width = 1; width < size; width *= 2) {
-        int sharedMemSize = width * 2 * sizeof(float);
+        int sharedMemSize = width * 2 * sizeof(float);  // Ensure this does not exceed GPU limit
         for (int i = 0; i < size; i = i + 2 * width) {
             mergeKernel<<<blocks, threads, sharedMemSize>>>(dev_values, size, i + width, min(i + 2 * width, size));
             cudaError_t err = cudaGetLastError();
@@ -155,10 +155,7 @@ void mergeSort(float *dev_values, int size) {
             cudaDeviceSynchronize();
         }
     }
-    // CALI_MARK_END(comp_large);
-    // CALI_MARK_END(comp);
 }
-
 
 int main(int argc, char *argv[]) {
     // Parse command line arguments
@@ -169,7 +166,9 @@ int main(int argc, char *argv[]) {
 
     THREADS = atoi(argv[1]);
     NUM_VALS = atoi(argv[2]);
-    BLOCKS = (NUM_VALS + THREADS - 1) / THREADS;
+    // BLOCKS = (NUM_VALS + THREADS - 1) / THREADS;
+    BLOCKS = NUM_VALS / THREADS;
+    
     char* inputType = argv[3]; // New argument for input type
 
     printf("Number of threads: %d\n", THREADS);
