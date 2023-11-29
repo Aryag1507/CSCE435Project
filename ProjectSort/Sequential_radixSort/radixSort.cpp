@@ -80,7 +80,12 @@ void countSort(int arr[], int n, int exp) {
 
 void radixSort(int arr[], int n) {
 
+    CALI_MARK_BEGIN(comp);
+    CALI_MARK_BEGIN(comp_small); 
     int m = getMax(arr, n);
+    CALI_MARK_END(comp_small); 
+    CALI_MARK_END(comp);
+    
 
     for (int exp = 1; m / exp > 0; exp *= 10)
         countSort(arr, n, exp);
