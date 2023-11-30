@@ -26,8 +26,3 @@ module load CMake/3.12.1
 CALI_CONFIG="spot(output=p${processes}-a${array_size}.cali, \
     time.variance)" \
 mpirun -np $processes ./radixSortMPI $array_size $input
-
-sorted_ctk.dataframe = sorted_ctk.dataframe.reset_index().drop([("node", ""), (65536,"nid"), (65536,"spot.channel")], axis=1)
-random_ctk.dataframe = random_ctk.dataframe.reset_index().drop([("node", ""), (65536,"nid"), (65536,"spot.channel")], axis=1)
-reverse_ctk.dataframe = reverse_ctk.dataframe.reset_index().drop([("node", ""), (65536,"nid"), (65536,"spot.channel")], axis=1)
-onep_ctk.dataframe = onep_ctk.dataframe.reset_index().drop([("node", ""), (65536,"nid"), (65536,"spot.channel")], axis=1)
