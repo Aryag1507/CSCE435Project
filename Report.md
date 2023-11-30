@@ -173,15 +173,23 @@ We used Adiak to collect all our metadata. We modified the algorithm, programmin
 
 ## 4a. Vary the following parameters
 
-We generated 2 caliper files with each algorithm while testing different metrics and keeping the rest constant when doing this. 
 
-For MPI Merge Sort, we changed the data size and saw the difference it makes on the time and saw that with increasing data size, the time it took to complete the whole computation increased. The computation and communication time was also relative to the whole computation time and increased with the increased data size.
+### Cuda Merge Sort
+Here are the weak and strong scaling plots for CUDA Merge Sort
 
-<img width="490" alt="Screen Shot 2023-11-15 at 11 55 24 PM" src="https://github.com/Aryag1507/CSCE435Project/assets/62392738/9e0d87c8-faa4-4b72-9644-d860bd387ff8">
+Weak scaling:
 
-For MPI Radix Sort, we changed the number of processors. We noticed that increasing the number of processors helped decrease the runtime due to the workload being distributed throughout multiple processors. The computation and communication time were relative to the overall runtime, and were also decreased with the decreased overall runtime.
+<img width="690" alt="Screen Shot 2023-11-15 at 11 55 24 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/146949c51510d32b5c72116e42b89ca56dfc18bd/ProjectSort/Graphs/weak_scaling_mergesort_cuda.png">
 
-<img width="495" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/assets/62392738/b7a19caa-c865-4efd-8e26-2c251700768f">
+Strong scaling:
+
+<img width="690" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/64009bfbbcec232879d75e71d34e8cc7a0b955ea/ProjectSort/Graphs/strong_scaling_mergesort_cuda.png">
+
+As we can see from the weak scaling graphs, the merge sort algorithm is parallelizing well and generalizes well to larger problem sizes. Given that the total time is relatively constant for main and comp_large, we can see that as the input size is increasing and the number of threads are increasing, the algorithm is able to make effiecient usage of the computational resources for the given problem
+
+
+For the strong scaling graphs, looking at main, random and sorted total time seems to decrease with an increase in threads. Reverse sorted and perturbed decrease upto a point and then increase again with higher counts, perhaps due to inefficiencies in the merge steps. For comp_large, we see a similar trend to the main function execution. For comm, sorted shows a relatively flat trend, indicating that communication time is not heavily impacted by thread count for sorted data. Random and reverse inputs show an initial decrease in communication time as and then increase. The perturbed input shows an irregular pattern, suggesting that the small amount of disorder in the array leads to unpredictable communication costs
+
 
 ## 4b. Hints for performance analysis
 
