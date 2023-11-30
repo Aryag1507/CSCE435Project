@@ -25,241 +25,256 @@ const char* comp_small = "comp_small";
 const char* comp_large = "comp_large";
 const char* correctness_check = "correctness_check";
 
+enum InputType { SORTED, RANDOM, REVERSE_SORTED, PERTURBED };
 
-/**
- * Prints the contents of an array.
- * 
- * @param array Pointer to the array.
- * @param size The number of elements in the array.
- */
-void print_array(const float *array, int size) {
-    printf("Array Contents: [");
-    for (int i = 0; i < size; i++) {
-        printf("%f", array[i]);
-        if (i < size - 1) {
-            printf(", ");
-        }
-    }
-    printf("]\n");
-}
+// Function to generate input data
+void generateInput(float* array, InputType type, int size) {
+    srand(time(NULL)); // Seed for random number generation
 
-// Assuming array_fill function is defined elsewhere
-void array_fill_random(float *array, int size) {
-    // Seed the random number generator to get different results each run
-    srand(time(NULL));
-
-    for (int i = 0; i < size; i++) {
-        // Generate a random float between 0 and 1
-        array[i] = (float)rand() / RAND_MAX;
-        // printf("%f ", array[i]);
-    }
-    // printf("\n");
-    // printf("\n");
-}
-
-// Fill array in sorted order
-void array_fill_sorted(float *array, int size) {
-    for (int i = 0; i < size; i++) {
-        array[i] = (float)i;  // or any other sorted pattern
-    }
-}
-
-// Fill array in reverse sorted order
-void array_fill_reverse_sorted(float *array, int size) {
-    for (int i = 0; i < size; i++) {
-        array[i] = (float)(size - i - 1);  // reverse order
-    }
-}
-
-// Fill array with 1% perturbation
-void array_fill_perturbed(float *array, int size) {
-    array_fill_sorted(array, size);  // Start with a sorted array
-    int perturb_count = size / 100;   // 1% of size
-    for (int i = 0; i < perturb_count; i++) {
-        int index = rand() % size;
-        array[index] = (float)rand() / RAND_MAX;  // Random perturbation
-    }
-}
-
-bool is_sorted(float *array, int size) {
-    for (int i = 0; i < size - 1; i++) {
-        if (array[i] > array[i + 1]) {
-            return false; // Not sorted
-        }
-    }
-    return true;
-}
-
-int THREADS;
-int BLOCKS;
-int NUM_VALS;
-
-__global__ void mergeKernel(float *dev_values, int size, int mid, int upper) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx >= upper) return; // Ensure the thread is within the range
-
-    // Calculate the starting points of the two halves
-    int start1 = idx > mid ? mid : idx;
-    int start2 = idx > mid ? idx : mid;
-    int end1 = mid, end2 = upper;
-
-    // Calculate the size needed for the temporary array in shared memory
-    int tempSize = upper - start1;
-    extern __shared__ float temp[];
-
-    // Ensure the temporary array doesn't exceed the shared memory size
-    if (threadIdx.x < tempSize) {
-        // Merge the two halves into temp
-        int i = start1, j = start2, k = 0;
-        while (i < end1 && j < end2) {
-            if (dev_values[i] < dev_values[j]) {
-                temp[k++] = dev_values[i++];
-            } else {
-                temp[k++] = dev_values[j++];
+    switch(type) {
+        case SORTED:
+            // Generate a sorted array
+            for(int i = 0; i < size; i++) {
+                array[i] = (float)i / size;
             }
-        }
+            break;
 
-        // Copy the remaining elements of the first half, if any
-        while (i < end1) {
-            temp[k++] = dev_values[i++];
-        }
-
-        // Copy the remaining elements of the second half, if any
-        while (j < end2) {
-            temp[k++] = dev_values[j++];
-        }
-
-        // Synchronize threads in the block to ensure sorting is done
-        __syncthreads();
-
-        // Copy back the merged elements to the original array
-        for (i = start1 + threadIdx.x; i < upper; i += blockDim.x) {
-            dev_values[i] = temp[i - start1];
-        }
-    }
-}
-
-void mergeSort(float *dev_values, int size) {
-    dim3 threads(THREADS, 1);
-    dim3 blocks(BLOCKS, 1);
-
-    for (int width = 1; width < size; width *= 2) {
-        int sharedMemSize = width * 2 * sizeof(float);  // Ensure this does not exceed GPU limit
-        for (int i = 0; i < size; i = i + 2 * width) {
-            mergeKernel<<<blocks, threads, sharedMemSize>>>(dev_values, size, i + width, min(i + 2 * width, size));
-            cudaError_t err = cudaGetLastError();
-            if (err != cudaSuccess) {
-                fprintf(stderr, "CUDA Error in mergeKernel: %s\n", cudaGetErrorString(err));
-                exit(EXIT_FAILURE);
+        case RANDOM:
+            // Generate a random array
+            for(int i = 0; i < size; i++) {
+                array[i] = (float)rand() / RAND_MAX;
             }
-            cudaDeviceSynchronize();
-        }
+            break;
+
+        case REVERSE_SORTED:
+            // Generate a reverse sorted array
+            for(int i = 0; i < size; i++) {
+                array[i] = (float)(size - i - 1) / size;
+            }
+            break;
+
+        case PERTURBED:
+            // Generate a mostly sorted array with a few random elements
+            for(int i = 0; i < size; i++) {
+                array[i] = (float)i / size;
+            }
+            // Perturb about 1% of the elements
+            for(int i = 0; i < size / 100; i++) {
+                int index = rand() % size;
+                array[index] = (float)rand() / RAND_MAX;
+            }
+            break;
+
+        default:
+            printf("Invalid input type\n");
+            break;
     }
 }
 
-int main(int argc, char *argv[]) {
-    // Parse command line arguments
-    if (argc < 4) {
-        fprintf(stderr, "Usage: %s <number of threads> <number of values> <input type>\n", argv[0]);
-        exit(EXIT_FAILURE);
+// CUDA Kernel for Merge Sort
+__global__ void mergeKernel(float* deviceArray, float* auxArray, int size, int width) {
+    int threadId = blockIdx.x * blockDim.x + threadIdx.x;
+    int start = threadId * width * 2;
+
+    // Check if the thread is working within the bounds of the array
+    if (start >= size) return;
+
+    // Calculate the middle and end indices of the sections to merge
+    int middle = min(start + width, size);
+    int end = min(start + width * 2, size);
+
+    // Merge the two halves
+    int i = start, j = middle, k = start;
+    while (i < middle && j < end) {
+        if (deviceArray[i] < deviceArray[j]) {
+            auxArray[k++] = deviceArray[i++];
+        } else {
+            auxArray[k++] = deviceArray[j++];
+        }
     }
 
-    THREADS = atoi(argv[1]);
-    NUM_VALS = atoi(argv[2]);
-    // BLOCKS = (NUM_VALS + THREADS - 1) / THREADS;
-    BLOCKS = NUM_VALS / THREADS;
+    // Copy remaining elements from the left half
+    while (i < middle) {
+        auxArray[k++] = deviceArray[i++];
+    }
+
+    // Copy remaining elements from the right half
+    while (j < end) {
+        auxArray[k++] = deviceArray[j++];
+    }
+}
+
+void merge(float* array, int left, int middle, int right) {
+    int n1 = middle - left + 1;
+    int n2 = right - middle;
+    float* L = (float*)malloc(n1 * sizeof(float));
+    float* R = (float*)malloc(n2 * sizeof(float));
+
+    for (int i = 0; i < n1; i++)
+        L[i] = array[left + i];
+    for (int j = 0; j < n2; j++)
+        R[j] = array[middle + 1 + j];
+
+    int i = 0, j = 0, k = left;
+    while (i < n1 && j < n2) {
+        if (L[i] <= R[j]) {
+            array[k++] = L[i++];
+        } else {
+            array[k++] = R[j++];
+        }
+    }
+
+    while (i < n1) {
+        array[k++] = L[i++];
+    }
+    while (j < n2) {
+        array[k++] = R[j++];
+    }
+
+    free(L);
+    free(R);
+}
+
+void gpuMergeSort(float* hostArray, int size, int numThreads, int subArraySize, float* gpuTimes, int* gpuOps) {
+    float* deviceArray;
+    float* auxArray;
+    cudaMalloc(&deviceArray, size * sizeof(float));
+    cudaMalloc(&auxArray, size * sizeof(float));
+
+    // CUDA event creation
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
     
-    char* inputType = argv[3]; // New argument for input type
+    // Start measuring time
+    cudaEventRecord(start);
 
-    printf("Number of threads: %d\n", THREADS);
-    printf("Number of values: %d\n", NUM_VALS);
-    printf("Number of blocks: %d\n", BLOCKS);
-    printf("Input type: %s\n", inputType);
+    // Copy data to device
+    CALI_MARK_BEGIN(comm);
+    CALI_MARK_BEGIN(comm_large);
+    CALI_MARK_BEGIN(cuda_memcpy);
+    cudaMemcpy(deviceArray, hostArray, size * sizeof(float), cudaMemcpyHostToDevice);
+    CALI_MARK_END(cuda_memcpy);
+    CALI_MARK_END(comm_large);
+    CALI_MARK_END(comm);
 
-    float total = 0.0f, minTime = FLT_MAX, maxTime = 0.0f;
-    const int numRuns = 10;
-    float times[numRuns];
+    dim3 blockSize(numThreads);
+    dim3 gridSize((subArraySize + blockSize.x - 1) / blockSize.x);
 
-    // Allocate host array
-    float *values = (float*) malloc(NUM_VALS * sizeof(float));
-
-    // Allocate device memory
-    float *dev_values;
-    cudaMalloc((void**) &dev_values, NUM_VALS * sizeof(float));
-    cudaError_t err = cudaGetLastError();
-    if (err != cudaSuccess) {
-        fprintf(stderr, "CUDA Error in cudaMalloc: %s\n", cudaGetErrorString(err));
-        exit(EXIT_FAILURE);
+    CALI_MARK_BEGIN(comp);
+    CALI_MARK_BEGIN(comp_large);
+    for (int width = 1; width < subArraySize; width *= 2) {
+        for (int start = 0; start < size; start += subArraySize) {
+            mergeKernel<<<gridSize, blockSize>>>(deviceArray + start, auxArray + start, subArraySize, width);
+        }
+        cudaDeviceSynchronize(); 
+        cudaMemcpy(deviceArray, auxArray, size * sizeof(float), cudaMemcpyDeviceToDevice);
     }
+    CALI_MARK_END(comp_large);
+    CALI_MARK_END(comp);
 
-    for (int run = 0; run < numRuns; ++run) {
+    CALI_MARK_BEGIN(comm);
+    CALI_MARK_BEGIN(comm_large);
+    CALI_MARK_BEGIN(cuda_memcpy);
+    // Copy data back to host
+    cudaMemcpy(hostArray, deviceArray, size * sizeof(float), cudaMemcpyDeviceToHost);
+    CALI_MARK_END(cuda_memcpy);
+    CALI_MARK_END(comm_large);
+    CALI_MARK_END(comm);
 
-        // Fill the array based on input type
-        CALI_MARK_BEGIN(data_init);
-        if (strcmp(inputType, "Sorted") == 0) {
-            array_fill_sorted(values, NUM_VALS);
-        }
-        else if (strcmp(inputType, "ReverseSorted") == 0) {
-            array_fill_reverse_sorted(values, NUM_VALS);
-        }
-        else if (strcmp(inputType, "Random") == 0) {
-            array_fill_random(values, NUM_VALS);
-        }
-        else if (strcmp(inputType, "1%Perturbed") == 0) {
-            array_fill_perturbed(values, NUM_VALS);
-        }
-        else {
-            fprintf(stderr, "Invalid input type!\n");
-            exit(EXIT_FAILURE);
-        }
-        CALI_MARK_END(data_init);
-        // if (run == 0) {
-            // print_array(values, NUM_VALS);
-        // }
+    // End measuring time
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
 
+    // Calculating time
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    gpuTimes[*gpuOps] = milliseconds; // Store the time
+    (*gpuOps)++; // Increment the operation count
 
-        // Copy data from host to device
-        CALI_MARK_BEGIN(comm);
-        CALI_MARK_BEGIN(comm_large);
-        CALI_MARK_BEGIN(cuda_memcpy);
-        cudaMemcpy(dev_values, values, NUM_VALS * sizeof(float), cudaMemcpyHostToDevice);
-        CALI_MARK_END(cuda_memcpy);
-        CALI_MARK_END(comm_large);
-        CALI_MARK_END(comm);
+    // Clean up
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+    cudaFree(deviceArray);
+    cudaFree(auxArray);
+}
 
-        cudaEvent_t start, stop;
-        cudaEventCreate(&start);
-        cudaEventCreate(&stop);
+void hybridMergeSort(float* hostArray, int size, int numThreads, int subArraySize, float* gpuTimes, int* gpuOps) {
+    gpuMergeSort(hostArray, size, numThreads, subArraySize, gpuTimes, gpuOps);
 
-        cudaEventRecord(start);
-        mergeSort(dev_values, NUM_VALS);  // already has CALI mark in function
-        cudaEventRecord(stop);
-        cudaEventSynchronize(stop);
-
-        cudaEventElapsedTime(&times[run], start, stop);
-        total += times[run];
-        if (times[run] < minTime) minTime = times[run];
-        if (times[run] > maxTime) maxTime = times[run];
-
-        cudaEventDestroy(start);
-        cudaEventDestroy(stop);
-
-        // Copy sorted data back to host and verify
-        cudaMemcpy(values, dev_values, NUM_VALS * sizeof(float), cudaMemcpyDeviceToHost);
-
-        // if (run == 0) {
-        //     print_array(values, NUM_VALS);
-        // }
-        if (!is_sorted(values, NUM_VALS)) {
-            fprintf(stderr, "Array is not correctly sorted!\n");
-            exit(EXIT_FAILURE);
+    // CPU-based merge for larger sections
+    for (int width = subArraySize; width < size; width *= 2) {
+        for (int i = 0; i < size; i += 2 * width) {
+            int mid = min(i + width - 1, size - 1);
+            int right = min(i + 2 * width - 1, size - 1);
+            merge(hostArray, i, mid, right);
         }
     }
+}
 
-    float average = total / numRuns;
+int main(int argc, char **argv) {
+    if (argc < 4) {
+        fprintf(stderr, "Usage: %s <num_threads> <array_size> <input_type>\n", argv[0]);
+        return 1;
+    }
 
+    // Parse command line arguments
+    int numThreads = atoi(argv[1]);
+    int size = atoi(argv[2]);
+    const char* input_type = argv[3];
+    InputType inputType = static_cast<InputType>(atoi(argv[3]));
 
-    // Adiak value updates
+    if (numThreads <= 0 || size <= 0 || inputType < SORTED || inputType > PERTURBED) {
+        fprintf(stderr, "Invalid arguments\n");
+        return 1;
+    }
+
+    // Allocate memory for the array
+    float* hostArray = (float*)malloc(sizeof(float) * size);
+    if (hostArray == NULL) {
+        fprintf(stderr, "Failed to allocate host memory\n");
+        return 1;
+    }
+
+    cali::ConfigManager mgr;
+    mgr.start();
+
+    CALI_MARK_BEGIN(mainn);
+
+    // Generate input data
+    CALI_MARK_BEGIN(data_init);
+    generateInput(hostArray, inputType, size);
+    CALI_MARK_END(data_init);
+
+    // Array to store GPU times and operation count
+    float gpuTimes[10]; // Assuming a maximum of 10 GPU operations
+    int gpuOps = 0;
+
+    int subArraySize = 1024; // Adjust as needed
+
+    // Perform hybrid merge sort
+    hybridMergeSort(hostArray, size, numThreads, subArraySize, gpuTimes, &gpuOps);
+
+    // Check if the array is sorted
+    bool isSorted = true;
+    for (int i = 0; i < size - 1; i++) {
+        if (hostArray[i] > hostArray[i + 1]) {
+            isSorted = false;
+            break;
+        }
+    }
+    printf("Array is %s\n", isSorted ? "correctly sorted" : "not correctly sorted");
+
+    // Calculate and print GPU times
+    float totalGPUTime = 0, minGPUTime = FLT_MAX, maxGPUTime = FLT_MIN;
+    for (int i = 0; i < gpuOps; i++) {
+        totalGPUTime += gpuTimes[i];
+        if (gpuTimes[i] < minGPUTime) minGPUTime = gpuTimes[i];
+        if (gpuTimes[i] > maxGPUTime) maxGPUTime = gpuTimes[i];
+    }
+
+    CALI_MARK_END(mainn);
+
     adiak::init(NULL);
     adiak::launchdate();    // launch date of the job
     adiak::libraries();     // Libraries used
@@ -269,22 +284,29 @@ int main(int argc, char *argv[]) {
     adiak::value("ProgrammingModel", "CUDA"); // e.g., "MPI", "CUDA", "MPIwithCUDA"
     adiak::value("Datatype", "float"); // The datatype of input elements (e.g., double, int, float)
     adiak::value("SizeOfDatatype", sizeof(float)); // sizeof(datatype) of input elements in bytes (e.g., 1, 2, 4)
-    adiak::value("InputSize", NUM_VALS); // The number of elements in input dataset (1000)
-    adiak::value("InputType", "Random"); // For sorting, this would be "Sorted", "ReverseSorted", "Random", "1%perturbed"
-    adiak::value("num_threads", THREADS); // The number of CUDA or OpenMP threads
-    adiak::value("num_blocks", BLOCKS); // The number of CUDA blocks 
+    adiak::value("InputSize", size); // The number of elements in input dataset (1000)
+    adiak::value("InputType", input_type); // For sorting, this would be "Sorted", "ReverseSorted", "Random", "1%perturbed"
+    adiak::value("num_threads", numThreads); // The number of CUDA or OpenMP threads
+    // adiak::value("num_blocks", BLOCKS); // The number of CUDA blocks 
     adiak::value("group_num", 2); // The number of your group (integer, e.g., 1, 10)
     adiak::value("implementation_source", "AI"); // Where you got the source code of your algorithm; choices: ("Online", "AI", "Handwritten").
-
-    // Print timing statistics
-    printf("Average GPU Time: %f ms\n", average);
-    printf("Minimum GPU Time: %f ms\n", minTime);
-    printf("Maximum GPU Time: %f ms\n", maxTime);
-    printf("Total GPU Time: %f ms\n", total);
-
-    // Clean up
-    cudaFree(dev_values);
-    free(values);
+    
+    printf("Avg GPU time/rank: %f ms\n", totalGPUTime / gpuOps);
+    printf("Min GPU time/rank: %f ms\n", minGPUTime);
+    printf("Max GPU time/rank: %f ms\n", maxGPUTime);
+    printf("Total GPU time: %f ms\n", totalGPUTime);
+    
+    
+    mgr.stop();
+    mgr.flush();
+    // Free the allocated memory
+    free(hostArray);
 
     return 0;
 }
+
+
+/*
+
+
+*/

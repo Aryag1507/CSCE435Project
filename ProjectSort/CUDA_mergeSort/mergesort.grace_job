@@ -27,5 +27,5 @@ module load intel/2020b
 module load GCCcore/7.3.0
 #
 
-CALI_CONFIG="spot(output=${num_threads}-${num_vals}-${inputType}.cali)" \
+CALI_CONFIG="spot(output=${num_threads}-${num_vals}-${inputType}-merge-cuda.cali)" \
 ./mergesort $num_threads $num_vals $inputType
