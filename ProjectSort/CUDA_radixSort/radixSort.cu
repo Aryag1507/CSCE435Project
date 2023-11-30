@@ -107,8 +107,8 @@ int main(int argc, char** argv) {
 
     CALI_MARK_BEGIN(whole_computation);
 
-    int array_length = atoi(argv[1]);
-    int num_threads = atoi(argv[2]);
+    int array_length = atoi(argv[2]);
+    int num_threads = atoi(argv[1]);
     string input_type = argv[3];
 
     int* h_data = (int*)malloc(array_length * sizeof(int));
