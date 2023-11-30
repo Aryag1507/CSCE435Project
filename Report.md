@@ -202,8 +202,13 @@ Strong scaling:
 
 As we can see from the weak scaling graphs, the odd even sort algorithm is parallelizing well and generalizes well to larger problem sizes. Given that the total time is relatively constant for main and comp_large, we can see that as the input size is increasing and the number of threads are increasing, the algorithm is able to make effiecient usage of the computational resources for the given problem
 
+### Radix Odd Even
 
-For the strong scaling graphs, looking at main, random and perturbed have low and relatively constant total time, which makes sense since the algorithm has less swaps and comparisons to make in this case. By contrast, random and reverse sorted benefit from higher thread counts. For comp_large, we see a similar trend to the main function execution. For comm, there is a relatively flat trend across the board indicating that communication time is not heavily impacted by thread count regardless of the different input types.
+Weak scaling:
+
+<img width="690" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/db151f56009316a3c0296878322e1bb9fc5002a4/ProjectSort/Graphs/radix_cuda_weak_scaling.png">
+
+Look at the weak scaling graphs for CUDA Radix Sort, we did not see mostly constant execution time for comm and comp_large. This could be due to bottlenecks with the Radix Cuda implementation.  
 
 ## 4b. Hints for performance analysis
 
