@@ -181,11 +181,11 @@ Here are the weak and strong scaling plots for CUDA Merge Sort
 
 Weak scaling:
 
-<img width="690" alt="Screen Shot 2023-11-15 at 11 55 24 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/146949c51510d32b5c72116e42b89ca56dfc18bd/ProjectSort/Graphs/weak_scaling_mergesort_cuda.png">
+<img width="1000" height="600" alt="Screen Shot 2023-11-15 at 11 55 24 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/146949c51510d32b5c72116e42b89ca56dfc18bd/ProjectSort/Graphs/weak_scaling_mergesort_cuda.png">
 
 Strong scaling:
 
-<img width="690" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/64009bfbbcec232879d75e71d34e8cc7a0b955ea/ProjectSort/Graphs/strong_scaling_mergesort_cuda.png">
+<img width="1000" height="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/64009bfbbcec232879d75e71d34e8cc7a0b955ea/ProjectSort/Graphs/strong_scaling_mergesort_cuda.png">
 
 As we can see from the weak scaling graphs, the merge sort algorithm is parallelizing well and generalizes well to larger problem sizes. Given that the total time is relatively constant for main and comp_large, we can see that as the input size is increasing and the number of threads are increasing, the algorithm is able to make effiecient usage of the computational resources for the given problem
 
@@ -196,11 +196,11 @@ For the strong scaling graphs, looking at main, random and sorted total time see
 
 Weak scaling:
 
-<img width="690" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/8f72034b55aebf98e5d7714eed9443bcaddcd8bc/ProjectSort/Graphs/weak_scaling_odd_even.png">
+<img width="1000" height="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/8f72034b55aebf98e5d7714eed9443bcaddcd8bc/ProjectSort/Graphs/weak_scaling_odd_even.png">
 
 Strong scaling:
 
-<img width="750" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/8f72034b55aebf98e5d7714eed9443bcaddcd8bc/ProjectSort/Graphs/cuda_odd_even_strongscale.png">
+<img width="1000" height="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/8f72034b55aebf98e5d7714eed9443bcaddcd8bc/ProjectSort/Graphs/cuda_odd_even_strongscale.png">
 
 As we can see from the weak scaling graphs, the odd even sort algorithm is parallelizing well and generalizes well to larger problem sizes. Given that the total time is relatively constant for main and comp_large, we can see that as the input size is increasing and the number of threads are increasing, the algorithm is able to make effiecient usage of the computational resources for the given problem
 
@@ -208,38 +208,59 @@ As we can see from the weak scaling graphs, the odd even sort algorithm is paral
 
 Weak scaling:
 
-<img width="750" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/db151f56009316a3c0296878322e1bb9fc5002a4/ProjectSort/Graphs/radix_cuda_weak_scaling.png">
+<img width="1000" height="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/db151f56009316a3c0296878322e1bb9fc5002a4/ProjectSort/Graphs/radix_cuda_weak_scaling.png">
 
 Look at the weak scaling graphs for CUDA Radix Sort, we did not see mostly constant execution time for comm and comp_large. This could be due to bottlenecks with the Radix Cuda implementation.  
 
 #### Merge Sort MPI
 
-<img width="400" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/c76f6eec46f4e5dc8f4d102510fc7587fb788bab/ProjectSort/Graphs/mergeSortMPI/Screen%20Shot%202023-11-30%20at%203.13.08%20AM.png">
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/c76f6eec46f4e5dc8f4d102510fc7587fb788bab/ProjectSort/Graphs/mergeSortMPI/Screen%20Shot%202023-11-30%20at%203.13.08%20AM.png">
 
-<img width="400" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/c76f6eec46f4e5dc8f4d102510fc7587fb788bab/ProjectSort/Graphs/mergeSortMPI/Screen%20Shot%202023-11-30%20at%203.13.24%20AM.png">
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/c76f6eec46f4e5dc8f4d102510fc7587fb788bab/ProjectSort/Graphs/mergeSortMPI/Screen%20Shot%202023-11-30%20at%203.13.24%20AM.png">
 
-<img width="400" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/c76f6eec46f4e5dc8f4d102510fc7587fb788bab/ProjectSort/Graphs/mergeSortMPI/Screen%20Shot%202023-11-30%20at%203.13.35%20AM.png">
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/c76f6eec46f4e5dc8f4d102510fc7587fb788bab/ProjectSort/Graphs/mergeSortMPI/Screen%20Shot%202023-11-30%20at%203.13.35%20AM.png">
 
 Above are the weak scaling graphs for the MPI implementation of Merge Sort. We can see the algorithm is not really parallelizing well. As the input size and number of processors are both increasing, we are seeing an uptrend in the total time. In weak scaling, we want to see a relatively constant time, as that means the algorithm is able to effieciently utilizes the parallel computing resources for larger problem sizes, but that is not the case here. 
 
-<img width="400" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/c76f6eec46f4e5dc8f4d102510fc7587fb788bab/ProjectSort/Graphs/mergeSortMPI/mergeSortMPI_strongScaling_comm.png">
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/c76f6eec46f4e5dc8f4d102510fc7587fb788bab/ProjectSort/Graphs/mergeSortMPI/mergeSortMPI_strongScaling_comm.png">
 
-<img width="400" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/c76f6eec46f4e5dc8f4d102510fc7587fb788bab/ProjectSort/Graphs/mergeSortMPI/mergeSortMPI_strongScaling_comp_large.png">
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/c76f6eec46f4e5dc8f4d102510fc7587fb788bab/ProjectSort/Graphs/mergeSortMPI/mergeSortMPI_strongScaling_comp_large.png">
 
-<img width="400" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/c76f6eec46f4e5dc8f4d102510fc7587fb788bab/ProjectSort/Graphs/mergeSortMPI/mergeSortMPI_strongScaling_main.png">
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/c76f6eec46f4e5dc8f4d102510fc7587fb788bab/ProjectSort/Graphs/mergeSortMPI/mergeSortMPI_strongScaling_main.png">
 
 Looking at the strong scaling graphs, we can once again see that this algorithm is not very effecient. 
 
 
-### Speed Up Grap
+### Speed Up
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/e3c40819cc37558d67d0f4b5478cff49da7e7362/ProjectSort/Graphs/speedup_mergeCuda_random.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/e3c40819cc37558d67d0f4b5478cff49da7e7362/ProjectSort/Graphs/speedup_mergeCuda_random_compLarge.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/e3c40819cc37558d67d0f4b5478cff49da7e7362/ProjectSort/Graphs/speedup_mergeCuda_random_main.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/e3c40819cc37558d67d0f4b5478cff49da7e7362/ProjectSort/Graphs/speedup_mergeCuda_reverse_compLarge.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/e3c40819cc37558d67d0f4b5478cff49da7e7362/ProjectSort/Graphs/speedup_mergeCuda_reverse_compLarge.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/e3c40819cc37558d67d0f4b5478cff49da7e7362/ProjectSort/Graphs/speedup_mergeCuda_sorted_compLarge.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/e3c40819cc37558d67d0f4b5478cff49da7e7362/ProjectSort/Graphs/speedup_mergeCuda_sorted_main.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/e3c40819cc37558d67d0f4b5478cff49da7e7362/ProjectSort/Graphs/speedup_mergeCuda_onep_compLarge.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/e3c40819cc37558d67d0f4b5478cff49da7e7362/ProjectSort/Graphs/speedup_mergeCuda_onep_main.png">
+
+
+
 
 ### Algorithm Comparison Graphs (MPI).
 
-<img width="400" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/855b2bf3576d5d15b81971752c70f346981feb9a/ProjectSort/Graphs/ComparisonGraphs/Screen%20Shot%202023-11-30%20at%202.33.50%20AM.png">
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/855b2bf3576d5d15b81971752c70f346981feb9a/ProjectSort/Graphs/ComparisonGraphs/Screen%20Shot%202023-11-30%20at%202.33.50%20AM.png">
 
-<img width="400" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/855b2bf3576d5d15b81971752c70f346981feb9a/ProjectSort/Graphs/ComparisonGraphs/Screen%20Shot%202023-11-30%20at%202.33.58%20AM.png">
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/855b2bf3576d5d15b81971752c70f346981feb9a/ProjectSort/Graphs/ComparisonGraphs/Screen%20Shot%202023-11-30%20at%202.33.58%20AM.png">
 
-<img width="400" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/855b2bf3576d5d15b81971752c70f346981feb9a/ProjectSort/Graphs/ComparisonGraphs/Screen%20Shot%202023-11-30%20at%202.34.13%20AM.png">
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/855b2bf3576d5d15b81971752c70f346981feb9a/ProjectSort/Graphs/ComparisonGraphs/Screen%20Shot%202023-11-30%20at%202.34.13%20AM.png">
 
 
 Above are the strong scaling comparison graphs for a constant input size of 2^18 for Radix, Odd Even, and Merge sort. We see a similar trend for all three regions across the board for the algorithms. Odd Even seems to be the one that is most greatly effected by increasing the number of processors. Total time goes up drastically, an explanation for which could be the inherent parallelism associated with Odd Even sort. Resource contention could be a limiting factor with increasing processor counts. Merge sort is a divide and conquer algorithm which divides the array into multiple sub-problems, which likely explains why the total time is relatively constant across the processor counts. At one point, the thread count is sufficient for the problem size, so additional processors really have no effect on the total time. Radix sort requires data to be exchanged between processes, especially during the redistribution of keys based on their digits. As the number of processes increases, the communication overhead can increase due to more messages being passed around. However, up to a certain point, the increased parallelism may compensate for this overhead, which could explain why the time first increases until 24 processes. Contention problems at higher processor counts may explain why the total time seems to go up after 64 or so processors
