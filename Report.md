@@ -171,7 +171,7 @@ We used the way mentioned in the original Report.md to generate our caliper file
 ## 3b. Collect Metadata
 We used Adiak to collect all our metadata. We modified the algorithm, programming model, inputsize, input type, num_procs, num_threads, num_blocks, group_number, and implementation sort for the respective algorithm implementations.
 
-## 4a. Vary the following parameters
+## 4. Algorithm Analysis
 
 
 ### Strong/Weak Scaling Graphs
@@ -228,7 +228,79 @@ Above are the weak scaling graphs for the MPI implementation of Merge Sort. We c
 
 <img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/c76f6eec46f4e5dc8f4d102510fc7587fb788bab/ProjectSort/Graphs/mergeSortMPI/mergeSortMPI_strongScaling_main.png">
 
-Looking at the strong scaling graphs, we can once again see that this algorithm is not very effecient. 
+Looking at the strong scaling graphs, we can once again see that this algorithm is not very effecient. With higher thread counts, there should be a reduction in the total time taken by the algorithm to sort the array. It looks like the sub problems are more effeciently solved at lower thread counts, meaning the algorithm is not parallelizing well. There could be issues regarding overhead associated with communication within processors that may be causing this
+
+<img width="800" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/mergeSortMPI/sample1.png">
+
+<img width="800" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/mergeSortMPI/sample2.png">
+
+<img width="800" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/mergeSortMPI/sample3.png">
+
+<img width="800" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/mergeSortMPI/sample4.png">
+
+
+
+#### Odd Even MPI
+
+Strong scaling:
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/oddEvenMPI/Screen%20Shot%202023-11-29%20at%2011.12.43%20PM.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/master/ProjectSort/Graphs/oddEvenMPI/Screen%20Shot%202023-11-29%20at%2011.14.18%20PM.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/oddEvenMPI/Screen%20Shot%202023-11-29%20at%2011.14.46%20PM.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/oddEvenMPI/Screen%20Shot%202023-11-29%20at%2011.15.01%20PM.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/oddEvenMPI/Screen%20Shot%202023-11-29%20at%2011.15.24%20PM.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/oddEvenMPI/Screen%20Shot%202023-11-29%20at%2011.15.42%20PM.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/oddEvenMPI/Screen%20Shot%202023-11-29%20at%2011.15.56%20PM.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/oddEvenMPI/Screen%20Shot%202023-11-29%20at%2011.16.10%20PM.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/oddEvenMPI/Screen%20Shot%202023-11-29%20at%2011.16.22%20PM.png">
+
+As the number of processors increases, we see a sharp increase in total time, especially past the 60-processor mark. This could be due to the communication overhead between processors becoming significant as the number of processors increases. This indicates that the algorithm is not really scaling well with an increased number of processors.
+
+Weak scaling:
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/oddEvenMPI/Screen%20Shot%202023-11-30%20at%203.12.27%20AM.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/oddEvenMPI/Screen%20Shot%202023-11-30%20at%203.12.38%20AM.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/oddEvenMPI/Screen%20Shot%202023-11-30%20at%203.12.50%20AM.png">
+
+As the number of processors doubles, the time taken for both problem sizes increases. This increase should ideally be constant in a perfect weak scaling scenario since each processor is handling the same size of the problem, but we observe that the time increases. Odd even sort is inherently parallelized to an extent, so it is likely that communcation between processors is a large overhead with many processors which could explain why the algorithm total time is increasing sharply
+
+#### Radix MPI
+
+Strong scaling:
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/radixSortMPI/Screen%20Shot%202023-11-29%20at%2011.54.14%20PM.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/radixSortMPI/Screen%20Shot%202023-11-29%20at%2011.54.26%20PM.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/radixSortMPI/Screen%20Shot%202023-11-29%20at%2011.54.38%20PM.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/radixSortMPI/Screen%20Shot%202023-11-29%20at%2011.54.53%20PM.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/radixSortMPI/Screen%20Shot%202023-11-29%20at%2011.55.04%20PM.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/radixSortMPI/Screen%20Shot%202023-11-29%20at%2011.55.16%20PM.png">
+
+The time for sorting the array remains relatively flat initially as the number of processors increases. This indicates good scaling performance when the number of processors is small. The sharp increase at higher processor counts could imply that the overhead of communication between processors, synchronization, or other parallelization overheads is becoming much larger compared to the computation time. Each step of the radix sort requires distribution of data across processors based on the current digit being considered. The overhead of this likely is getting very large, which would explain the trend
+
+Weak scaling:
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/radixSortMPI/Screen%20Shot%202023-11-30%20at%203.13.58%20AM.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/radixSortMPI/Screen%20Shot%202023-11-30%20at%203.17.02%20AM.png">
+
+<img width="600" alt="Screen Shot 2023-11-15 at 11 54 20 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/6cb0d461fb629ad2eb2f52ed6bb8057a453b31cb/ProjectSort/Graphs/radixSortMPI/Screen%20Shot%202023-11-30%20at%203.17.12%20AM.png">
+
+The fact that the lines are not flat (which would indicate ideal weak scaling) suggests that the algorithm does not perfectly maintain efficiency as the number of processors increases. The increase in time could be due to the overhead associated with managing radix sort's internal workings which can lead to much higher execution times
 
 
 ### Speed Up
@@ -264,15 +336,3 @@ Looking at the strong scaling graphs, we can once again see that this algorithm 
 
 
 Above are the strong scaling comparison graphs for a constant input size of 2^18 for Radix, Odd Even, and Merge sort. We see a similar trend for all three regions across the board for the algorithms. Odd Even seems to be the one that is most greatly effected by increasing the number of processors. Total time goes up drastically, an explanation for which could be the inherent parallelism associated with Odd Even sort. Resource contention could be a limiting factor with increasing processor counts. Merge sort is a divide and conquer algorithm which divides the array into multiple sub-problems, which likely explains why the total time is relatively constant across the processor counts. At one point, the thread count is sufficient for the problem size, so additional processors really have no effect on the total time. Radix sort requires data to be exchanged between processes, especially during the redistribution of keys based on their digits. As the number of processes increases, the communication overhead can increase due to more messages being passed around. However, up to a certain point, the increased parallelism may compensate for this overhead, which could explain why the time first increases until 24 processes. Contention problems at higher processor counts may explain why the total time seems to go up after 64 or so processors
-
-
-
-## 4b. Hints for performance analysis
-
-Similarly, we did this for all the algorithm implementations and noticed that increasing the number of processors/threads reduced runtime, increasing the input sizes increased runtime, changing the inputTypes changed the runtime depending on the inputType. The sorted arrays were the fastest since the arrays were already sorted and nothing else was required to be done. The reverse sorted were generally the slowest since the algorithm would for sure have to change the placement of the numbers since everything was basically sorted backwards. The random and 1% perturbed were in the middle with runtime since there are random elements involved with it. The communication and computation time were relative to the whole computation time, so if the whole computation time was decreased, so was the communication and computation time. 
-
-
-## Note:
-
-We were unable to get thicket to work to graph our plots, therefore we graphed what we could manually. A lot of our nodes were killed and that prevented us from completing the project with thicket.
-
