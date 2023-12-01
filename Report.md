@@ -181,7 +181,13 @@ Here are the weak and strong scaling plots for CUDA Merge Sort
 
 Weak scaling:
 
-<img width="1000" height="600" alt="Screen Shot 2023-11-15 at 11 55 24 PM" src="https://github.com/Aryag1507/CSCE435Project/blob/146949c51510d32b5c72116e42b89ca56dfc18bd/ProjectSort/Graphs/weak_scaling_mergesort_cuda.png">
+
+![weak_scaling_mergesort_cuda](https://github.com/Aryag1507/CSCE435Project/assets/72848214/c7c72226-cdc6-437e-8e30-276ec3a57dae)
+
+![weak_scaling_mergesort_cuda_random](https://github.com/Aryag1507/CSCE435Project/assets/72848214/a48ca651-04cd-41d3-a928-be54aa199511)
+
+![weak_scaling_odd_even](https://github.com/Aryag1507/CSCE435Project/assets/72848214/3a5998a1-d4ae-4697-8c92-42de9c24c93d)
+
 
 Strong scaling:
 
